@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Creator Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<!-- navbar.html -->
+<nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center fw-bold me-4" th:href="@{/home}">
+            <span style="display:inline-block;width:36px;height:36px;background:#7b5cff;color:#fff;font-weight:bold;font-size:1.5rem;border-radius:8px;line-height:36px;text-align:center;margin-right:8px;">I</span>
+            <span style="color:#7b5cff;font-weight:700;font-size:1.3rem;">InfluConnect</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+            <ul class="navbar-nav align-items-lg-center gap-2 mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/home}">Trang Chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/campaign/create}">Tạo chiến dịch</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Thông báo</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Blog</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Liên Hệ</a>
+                </li>
+            </ul>
+            <!-- Account Dropdown -->
+            <div class="dropdown ms-lg-3 mt-3 mt-lg-0">
+                <button class="btn btn-light d-flex align-items-center px-3 py-2 rounded-pill shadow-sm" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-weight:600;">
+                    <i class="fa-regular fa-user me-2"></i>
+                    <span th:if="${currentUser == null}">Đăng nhập</span>
+                    <span th:if="${currentUser != null}" th:text="${currentUser.name}"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li th:if="${currentUser == null}"><a class="dropdown-item" th:href="@{/login}">Đăng nhập</a></li>
+                    <li th:if="${currentUser != null}"><a class="dropdown-item" th:href="@{/logout}">Đăng xuất</a></li>
+                    <li th:if="${currentUser != null and currentUser.role.name == 'ADMIN'}"><a class="dropdown-item" th:href="@{/admin/dashboard}">Quản trị</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+<div th:replace="body-content :: mainContent"></div>
+</div>
+</body>
+</html>

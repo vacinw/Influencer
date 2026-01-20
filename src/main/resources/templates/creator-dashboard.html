@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>InfluConnect - KOL Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: radial-gradient(ellipse at 20% 20%, #7b5cff 0%, #3a3a7c 40%, #000 100%);
+            color: #fff;
+        }
+        .hero-section {
+            background: transparent;
+            padding: 0 0 40px 0;
+        }
+        .section-title { font-weight: bold; font-size: 2rem; margin-bottom: 24px; }
+        .partner-logo { max-width: 100px; margin: 0 16px; filter: grayscale(1); transition: filter 0.3s; background: #1a1333; border-radius: 8px; }
+        .partner-logo:hover { filter: grayscale(0); box-shadow: 0 0 8px #7b5cff88; }
+        .testimonial-card {
+            background: rgba(30, 20, 60, 0.85);
+            border-radius: 12px;
+            box-shadow: 0 2px 16px #7b5cff33;
+            padding: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            color: #fff;
+        }
+        .testimonial-card:hover { transform: translateY(-8px) scale(1.03); box-shadow: 0 4px 32px #7b5cff66; }
+        .contact-form {
+            background: rgba(30, 20, 60, 0.95);
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 16px #7b5cff33;
+            color: #fff;
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #7b5cff 0%, #3a3a7c 100%);
+            border: none;
+            color: #fff;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px #7b5cff44;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #3a3a7c 0%, #7b5cff 100%);
+            box-shadow: 0 4px 16px #7b5cff88;
+        }
+        .btn-outline-secondary {
+            border-color: #7b5cff;
+            color: #7b5cff;
+        }
+        .btn-outline-secondary:hover, .btn-outline-secondary:focus {
+            background: #7b5cff;
+            color: #fff;
+        }
+        .solution-card {
+            background: rgba(30, 20, 60, 0.85);
+            color: #fff;
+            border: 1px solid #7b5cff44;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .solution-card:hover { box-shadow: 0 4px 16px #7b5cff88; transform: translateY(-6px) scale(1.02); }
+        .project-card {
+            background: rgba(30, 20, 60, 0.85);
+            color: #fff;
+            border: 1px solid #7b5cff44;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .project-card:hover { box-shadow: 0 4px 16px #7b5cff88; transform: translateY(-6px) scale(1.02); }
+        .floating-btns { position: fixed; bottom: 24px; right: 24px; z-index: 1000; }
+        .floating-btns a { margin-left: 8px; background: #1a1333 !important; color: #7b5cff !important; border: 1px solid #7b5cff44; }
+        .floating-btns a:hover { background: #7b5cff !important; color: #fff !important; }
+        .footer-link { color: #7b5cff; text-decoration: underline; }
+
+        /* Updated Navbar Styles */
+        .navbar.navbar-light {
+            background-color: #fff !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05) !important;
+        }
+        .navbar-nav .nav-link {
+            color: #343a40 !important;
+            font-weight: 500;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .navbar-nav .nav-item .nav-link.active {
+            background-color: #f1f3f5;
+            border-radius: 99px;
+        }
+        .navbar-nav .nav-link:not(.active):hover {
+            color: #7b5cff !important;
+        }
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,.1);
+        }
+        .navbar-toggler {
+            border-color: #7b5cff;
+        }
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(123, 92, 255, 1)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        @media (max-width: 767px) {
+            .section-title { font-size: 1.3rem; }
+            .partner-logo { max-width: 70px; margin: 0 8px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- navbar.html -->
+<nav class="navbar navbar-expand-lg navbar-light sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center fw-bold me-4" th:href="@{/home}">
+            <span style="display:inline-block;width:36px;height:36px;background:#7b5cff;color:#fff;font-weight:bold;font-size:1.5rem;border-radius:8px;line-height:36px;text-align:center;margin-right:8px;">I</span>
+            <span style="color:#7b5cff;font-weight:700;font-size:1.3rem;">InfluConnect</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+            <ul class="navbar-nav align-items-lg-center gap-2 mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/home}">Trang Chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/campaign/create}">Tạo chiến dịch</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/creator/my-campaigns}">Chiến dịch của tôi</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Blog</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Liên Hệ</a>
+                </li>
+            </ul>
+            <!-- Account Dropdown -->
+            <div class="dropdown ms-lg-3 mt-3 mt-lg-0">
+                <button class="btn btn-light d-flex align-items-center px-3 py-2 rounded-pill shadow-sm" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="font-weight:600;">
+                    <i class="fa-regular fa-user me-2"></i>
+                    <span th:if="${currentUser == null}">Đăng nhập</span>
+                    <span th:if="${currentUser != null}" th:text="${currentUser.name}"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li th:if="${currentUser == null}"><a class="dropdown-item" th:href="@{/login}">Đăng nhập</a></li>
+                    <li th:if="${currentUser != null}"><a class="dropdown-item" th:href="@{/logout}">Đăng xuất</a></li>
+                    <li th:if="${currentUser != null and currentUser.role.name == 'ADMIN'}"><a class="dropdown-item" th:href="@{/admin/dashboard}">Quản trị</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+<div th:replace="body-content :: mainContent"></div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</body>
+</html>

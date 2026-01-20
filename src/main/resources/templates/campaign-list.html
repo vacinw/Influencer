@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${isMyCampaigns ? 'Chiến dịch của tôi' : 'Danh sách chiến dịch'}">Danh sách chiến dịch</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+</head>
+<body class="bg-light">
+
+<!-- Header với tiêu đề và nút tạo mới -->
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 th:text="${isMyCampaigns ? 'Chiến dịch của tôi' : 'Danh sách chiến dịch'}">Danh sách chiến dịch</h2>
+        <a th:if="${isMyCampaigns}" th:href="@{/campaign/create}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Tạo chiến dịch mới
+        </a>
+    </div>
+    
+    <!-- Thông báo thành công -->
+    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        Tạo chiến dịch thành công!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    <!-- Thông báo cập nhật thành công -->
+    <div th:if="${param.updated}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        Cập nhật chiến dịch thành công!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    <!-- Thông báo xóa thành công -->
+    <div th:if="${param.deleted}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        Xóa chiến dịch thành công!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    <!-- Thông báo nếu chưa có chiến dịch nào -->
+    <div th:if="${campaigns == null or campaigns.isEmpty()}" class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <span th:text="${isMyCampaigns ? 'Bạn chưa tạo chiến dịch nào. Hãy tạo chiến dịch đầu tiên!' : 'Chưa có chiến dịch nào.'}"></span>
+        <a th:if="${isMyCampaigns}" th:href="@{/campaign/create}" class="btn btn-sm btn-primary ms-2">Tạo ngay</a>
+    </div>
+    
+    <!-- Thông báo thành công từ flash attribute -->
+    <div th:if="${success != null and !#strings.isEmpty(success)}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${success}">Thành công!</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    <!-- Thông báo lỗi từ flash attribute -->
+    <div th:if="${error != null and !#strings.isEmpty(error)}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-circle me-2"></i>
+        <span th:text="${error}">Có lỗi xảy ra!</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+
+<!-- Thanh lọc -->
+<div class="container py-2">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="d-flex flex-wrap align-items-center gap-2 p-3 bg-white rounded-pill shadow-sm">
+                <select class="form-select w-auto">
+                    <option>Lĩnh vực</option>
+                </select>
+                <select class="form-select w-auto">
+                    <option>Nền tảng</option>
+                </select>
+                <input type="text" class="form-control flex-grow-1" placeholder="Nhập tìm kiếm ở đây"/>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Danh sách campaign -->
+<div class="container pb-5">
+    <div class="row g-4">
+        <div class="col-md-4" th:each="campaign : ${campaigns}">
+            <div class="card shadow-sm h-100">
+                <img th:src="${campaign.imageUrl}" class="card-img-top" alt="Ảnh chiến dịch" style="height: 200px; object-fit: cover"/>
+                <div class="card-body">
+
+                    <!-- Link đến trang chi tiết chiến dịch -->
+                    <a th:if="${isMyCampaigns}" th:href="@{/creator/campaign-detail/{id}(id=${campaign.id})}" class="text-decoration-none">
+                        <h5 class="card-title" th:text="${campaign.title}">Tên chiến dịch</h5>
+                    </a>
+                    <a th:if="${!isMyCampaigns}" th:href="@{/receiver/campaign-detail/{id}(id=${campaign.id})}" class="text-decoration-none">
+                        <h5 class="card-title" th:text="${campaign.title}">Tên chiến dịch</h5>
+                    </a>
+
+                    <!-- Tag (badge) hiển thị nếu có -->
+                    <div class="mb-2" th:if="${campaign.tags != null and !campaign.tags.isEmpty()}">
+                        <span class="badge bg-primary me-1" th:if="${campaign.tags.contains('review')}">Review</span>
+                        <span class="badge text-white me-1" style="background-color: #ff7043;"
+                              th:if="${campaign.tags.contains('livestream')}">Livestream</span>
+                    </div>
+
+                    <p class="text-muted mb-2" th:text="'Hạn ứng tuyển: ' + ${campaign.deadline}">Hạn ứng tuyển: ...</p>
+
+                    <!-- Hiển thị status của campaign hoặc application status nếu đã ứng tuyển -->
+                    <div class="mb-2">
+                        <!-- Status của application nếu đã ứng tuyển -->
+                        <span th:if="${!isMyCampaigns and applicationMap != null and applicationMap.containsKey(campaign.id)}" 
+                              th:with="app=${applicationMap.get(campaign.id)}"
+                              class="badge me-1"
+                              th:classappend="${app.status == 'PENDING' ? 'bg-warning' : (app.status == 'APPROVED' ? 'bg-success' : 'bg-danger')}"
+                              th:text="${app.status == 'PENDING' ? 'Chờ xác nhận' : (app.status == 'APPROVED' ? 'Ứng tuyển thành công' : 'Đã từ chối')}">
+                            Chờ xác nhận
+                        </span>
+                        
+                        <!-- Status của campaign nếu chưa ứng tuyển hoặc là creator -->
+                        <span th:if="${isMyCampaigns or applicationMap == null or !applicationMap.containsKey(campaign.id)}"
+                              class="badge me-1"
+                              th:classappend="${campaign.status == 'Đã kết thúc' ? 'bg-danger' : (campaign.status == 'Đang tuyển' ? 'bg-success' : 'bg-warning')}"
+                              th:text="${campaign.status}">
+                            Đang tuyển
+                        </span>
+                    </div>
+                    
+                    <!-- Hiển thị số lượng ứng viên (chỉ cho creator) -->
+                    <div th:if="${isMyCampaigns}" class="mb-2">
+                        <p class="text-muted mb-0">
+                            <i class="bi bi-people me-1"></i>
+                            <strong th:text="${applicantCountMap != null and applicantCountMap.containsKey(campaign.id) ? applicantCountMap.get(campaign.id) : 0}">0</strong>
+                            <span> ứng viên</span>
+                        </p>
+                    </div>
+
+                    <!-- Mạng xã hội -->
+                    <div class="d-flex gap-2 mt-2">
+                        <i class="bi bi-facebook text-primary fs-5" th:if="${campaign.platforms != null and campaign.platforms.contains('facebook')}"></i>
+                        <i class="bi bi-tiktok fs-5" th:if="${campaign.platforms != null and campaign.platforms.contains('tiktok')}"></i>
+                        <i class="bi bi-youtube text-danger fs-5" th:if="${campaign.platforms != null and campaign.platforms.contains('youtube')}"></i>
+                        <i class="bi bi-instagram text-danger fs-5" th:if="${campaign.platforms != null and campaign.platforms.contains('instagram')}"></i>
+                    </div>
+
+                    <!-- Nút Sửa - chỉ hiển thị icon, không có chữ (chỉ cho creator) -->
+                    <div th:if="${isMyCampaigns}" class="mt-3">
+                        <a th:href="@{/campaign/edit/{id}(id=${campaign.id})}" 
+                           class="btn btn-sm btn-warning w-100" 
+                           title="Sửa chiến dịch">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                    </div>
+                    
+                    <!-- Nút Huỷ ứng tuyển (chỉ hiển thị khi là receiver và đã ứng tuyển với status PENDING) -->
+                    <div th:if="${!isMyCampaigns and applicationMap != null and applicationMap.containsKey(campaign.id)}" 
+                         th:with="app=${applicationMap.get(campaign.id)}"
+                         class="mt-3">
+                        <form th:if="${app.status == 'PENDING'}" th:action="@{/cancel-application}" method="post" style="display: inline;">
+                            <input type="hidden" th:name="campaignId" th:value="${campaign.id}"/>
+                            <button type="submit" class="btn btn-sm btn-danger w-100" 
+                                    onclick="return confirm('Bạn có chắc chắn muốn hủy ứng tuyển chiến dịch này?');">
+                                <i class="bi bi-x-circle me-2"></i>Huỷ ứng tuyển
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

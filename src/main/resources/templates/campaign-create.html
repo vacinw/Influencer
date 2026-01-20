@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tạo chiến dịch mới</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-light">
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top shadow-sm">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center fw-bold me-4" th:href="@{/home}">
+            <span style="display:inline-block;width:36px;height:36px;background:#7b5cff;color:#fff;font-weight:bold;font-size:1.5rem;border-radius:8px;line-height:36px;text-align:center;margin-right:8px;">I</span>
+            <span style="color:#7b5cff;font-weight:700;font-size:1.3rem;">InfluConnect</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+            <ul class="navbar-nav align-items-lg-center gap-2 mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/home}">Trang Chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/campaign/create}">Tạo chiến dịch</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/creator/my-campaigns}">Chiến dịch của tôi</a>
+                </li>
+            </ul>
+            <div class="ms-lg-3 mt-3 mt-lg-0">
+                <a th:href="@{/creator/dashboard}" class="btn btn-outline-primary">Quay lại Dashboard</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Form tạo chiến dịch -->
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i th:class="${(isEdit != null and isEdit ? 'fas fa-edit' : 'fas fa-plus-circle') + ' me-2'}"></i>
+                        <span th:text="${isEdit != null and isEdit ? 'Sửa chiến dịch' : 'Tạo chiến dịch mới'}">Tạo chiến dịch mới</span>
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Hiển thị thông báo lỗi nếu có -->
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <span th:text="${error}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    
+                    <!-- Hiển thị thông báo thành công nếu có -->
+                    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Tạo chiến dịch thành công!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    
+                    <!-- Form tạo mới -->
+                    <form th:if="${isEdit == null or !isEdit}" 
+                          th:action="@{/campaign/create}" 
+                          th:object="${campaign}" 
+                          method="post">
+                        <!-- Tiêu đề -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label fw-bold">Tiêu đề chiến dịch <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="title" 
+                                   th:field="*{title}" 
+                                   placeholder="Nhập tiêu đề chiến dịch"
+                                   required>
+                        </div>
+
+                        <!-- Mô tả -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label fw-bold">Mô tả chiến dịch</label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      th:field="*{description}" 
+                                      rows="5" 
+                                      placeholder="Nhập mô tả chi tiết về chiến dịch..."></textarea>
+                        </div>
+
+                        <!-- URL ảnh -->
+                        <div class="mb-3">
+                            <label for="imageUrl" class="form-label fw-bold">URL ảnh chiến dịch</label>
+                            <input type="url" 
+                                   class="form-control" 
+                                   id="imageUrl" 
+                                   th:field="*{imageUrl}" 
+                                   placeholder="https://example.com/image.jpg">
+                            <small class="form-text text-muted">Nhập đường dẫn URL của ảnh đại diện cho chiến dịch</small>
+                        </div>
+
+                        <!-- Hạn ứng tuyển -->
+                        <div class="mb-3">
+                            <label for="deadline" class="form-label fw-bold">Hạn ứng tuyển</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="deadline" 
+                                   th:field="*{deadline}">
+                        </div>
+
+                        <!-- Trạng thái -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label fw-bold">Trạng thái</label>
+                            <select class="form-select" id="status" th:field="*{status}">
+                                <option value="Đang tuyển">Đang tuyển</option>
+                                <option value="Hạn ứng tuyển">Hạn ứng tuyển</option>
+                                <option value="Đã kết thúc">Đã kết thúc</option>
+                            </select>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label for="tagsInput" class="form-label fw-bold">Tags</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="tagsInput" 
+                                   name="tagsInput" 
+                                   th:value="${tagsInput != null ? tagsInput : ''}"
+                                   placeholder="review, livestream, unboxing (cách nhau bằng dấu phẩy)">
+                            <small class="form-text text-muted">Nhập các tags cách nhau bằng dấu phẩy (ví dụ: review, livestream, unboxing)</small>
+                        </div>
+
+                        <!-- Platforms -->
+                        <div class="mb-3">
+                            <label for="platformsInput" class="form-label fw-bold">Nền tảng</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="platformsInput" 
+                                   name="platformsInput" 
+                                   th:value="${platformsInput != null ? platformsInput : ''}"
+                                   placeholder="facebook, youtube, tiktok (cách nhau bằng dấu phẩy)">
+                            <small class="form-text text-muted">Nhập các nền tảng cách nhau bằng dấu phẩy (ví dụ: facebook, youtube, tiktok)</small>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2 justify-content-end mt-4">
+                            <a th:href="@{/creator/my-campaigns}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                <span>Tạo chiến dịch</span>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Form sửa -->
+                    <form th:if="${isEdit != null and isEdit}" 
+                          th:action="@{/campaign/edit/{id}(id=${campaign.id})}" 
+                          th:object="${campaign}" 
+                          method="post">
+                        <!-- Tiêu đề -->
+                        <div class="mb-3">
+                            <label for="titleEdit" class="form-label fw-bold">Tiêu đề chiến dịch <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="titleEdit" 
+                                   th:field="*{title}" 
+                                   placeholder="Nhập tiêu đề chiến dịch"
+                                   required>
+                        </div>
+
+                        <!-- Mô tả -->
+                        <div class="mb-3">
+                            <label for="descriptionEdit" class="form-label fw-bold">Mô tả chiến dịch</label>
+                            <textarea class="form-control" 
+                                      id="descriptionEdit" 
+                                      th:field="*{description}" 
+                                      rows="5" 
+                                      placeholder="Nhập mô tả chi tiết về chiến dịch..."></textarea>
+                        </div>
+
+                        <!-- URL ảnh -->
+                        <div class="mb-3">
+                            <label for="imageUrlEdit" class="form-label fw-bold">URL ảnh chiến dịch</label>
+                            <input type="url" 
+                                   class="form-control" 
+                                   id="imageUrlEdit" 
+                                   th:field="*{imageUrl}" 
+                                   placeholder="https://example.com/image.jpg">
+                            <small class="form-text text-muted">Nhập đường dẫn URL của ảnh đại diện cho chiến dịch</small>
+                        </div>
+
+                        <!-- Hạn ứng tuyển -->
+                        <div class="mb-3">
+                            <label for="deadlineEdit" class="form-label fw-bold">Hạn ứng tuyển</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="deadlineEdit" 
+                                   name="deadline"
+                                   th:value="${campaign.deadline != null ? #temporals.format(campaign.deadline, 'yyyy-MM-dd') : ''}">
+                        </div>
+
+                        <!-- Trạng thái -->
+                        <div class="mb-3">
+                            <label for="statusEdit" class="form-label fw-bold">Trạng thái</label>
+                            <select class="form-select" id="statusEdit" th:field="*{status}">
+                                <option value="Đang tuyển">Đang tuyển</option>
+                                <option value="Hạn ứng tuyển">Hạn ứng tuyển</option>
+                                <option value="Đã kết thúc">Đã kết thúc</option>
+                            </select>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label for="tagsInputEdit" class="form-label fw-bold">Tags</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="tagsInputEdit" 
+                                   name="tagsInput" 
+                                   th:value="${tagsInput != null ? tagsInput : ''}"
+                                   placeholder="review, livestream, unboxing (cách nhau bằng dấu phẩy)">
+                            <small class="form-text text-muted">Nhập các tags cách nhau bằng dấu phẩy (ví dụ: review, livestream, unboxing)</small>
+                        </div>
+
+                        <!-- Platforms -->
+                        <div class="mb-3">
+                            <label for="platformsInputEdit" class="form-label fw-bold">Nền tảng</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="platformsInputEdit" 
+                                   name="platformsInput" 
+                                   th:value="${platformsInput != null ? platformsInput : ''}"
+                                   placeholder="facebook, youtube, tiktok (cách nhau bằng dấu phẩy)">
+                            <small class="form-text text-muted">Nhập các nền tảng cách nhau bằng dấu phẩy (ví dụ: facebook, youtube, tiktok)</small>
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2 justify-content-end mt-4">
+                            <a th:href="@{/creator/my-campaigns}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Hủy
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                <span>Cập nhật</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
