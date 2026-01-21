@@ -44,6 +44,7 @@ function AppRoutes() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/creator/dashboard" element={<CreatorDashboard />} />
         <Route path="/creator/campaigns/new" element={<CreateCampaign />} />
+        <Route path="/creator/campaigns/:id/edit" element={<CreateCampaign />} />
         <Route path="/creator/campaigns/:id" element={<CampaignDetail />} />
         <Route path="/creator/campaigns/:id/applicants" element={<ApplicantsList />} />
         <Route path="/wallet" element={<WalletPage />} />

@@ -47,11 +47,6 @@ const ReceiverDashboard = () => {
     });
 
     useEffect(() => {
-        // Fetch applications initially to know what user has applied to (first page only for check)
-        fetchMyApplications(true);
-    }, []);
-
-    useEffect(() => {
         if (activeTab === 'find') {
             const timer = setTimeout(() => {
                 fetchCampaigns();
@@ -407,6 +402,15 @@ const ReceiverDashboard = () => {
                     )}
                 </div>
             )}
+
+
+
+    // ...
+
+
+
+            return (
+            // ... (previous tabs)
 
             {activeTab === 'jobs' && (
                 <div className="mt-8">
