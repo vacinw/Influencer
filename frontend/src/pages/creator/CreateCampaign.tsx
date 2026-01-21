@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import { ChevronLeft, Upload, Calendar, Hash, Monitor, X, Image as ImageIcon, Video, Loader2, Layout, CheckCircle, Eye, Edit2 } from 'lucide-react';
 import { ClassicLayout, ShowcaseLayout, SocialLayout, MinimalLayout } from '../../components/layouts/CampaignLayouts';
 import { useAuth } from '../../context/AuthContext';
 
 const CreateCampaign = () => {
+    const { id } = useParams(); // Get campaign ID if in edit mode
     const navigate = useNavigate();
     const { user } = useAuth();
     const [formData, setFormData] = useState({
@@ -16,12 +17,41 @@ const CreateCampaign = () => {
         deadline: '',
         tags: '',
         platforms: [] as string[],
-        layoutStyle: 'CLASSIC' // Default
+        layoutStyle: 'CLASSIC', // Default
+        status: 'Đang tuyển'
     });
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(false); // For initial data fetch
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
-    const [isPreview, setIsPreview] = useState(false); // New state for preview mode
+    const [isPreview, setIsPreview] = useState(false);
+
+    // Fetch existing campaign if editing
+    useEffect(() => {
+        if (id) {
+            setFetching(true);
+            api.get(`/campaign/${id}`)
+                .then(response => {
+                    const data = response.data;
+                    setFormData({
+                        title: data.title || '',
+                        description: data.description || '',
+                        images: data.images || [],
+                        videos: data.videos || [],
+                        deadline: data.deadline ? data.deadline.split('T')[0] : '',
+                        tags: Array.isArray(data.tags) ? data.tags.join(', ') : (data.tags || ''),
+                        platforms: data.platforms || [],
+                        layoutStyle: data.layoutStyle || 'CLASSIC',
+                        status: data.status || 'Đang tuyển'
+                    });
+                })
+                .catch(err => {
+                    console.error("Failed to fetch campaign details", err);
+                    setError("Failed to load campaign data.");
+                })
+                .finally(() => setFetching(false));
+        }
+    }, [id]);
 
     const imageInputRef = useRef<HTMLInputElement>(null);
     const videoInputRef = useRef<HTMLInputElement>(null);
@@ -107,14 +137,21 @@ const CreateCampaign = () => {
                 deadline: formData.deadline,
                 tags: tagsArray,
                 platforms: formData.platforms,
-                layoutStyle: formData.layoutStyle
+                layoutStyle: formData.layoutStyle,
+                status: formData.status
             };
 
-            await api.post('/campaign/create', payload);
+            if (id) {
+                // Update existing campaign
+                await api.put(`/campaign/${id}`, payload);
+            } else {
+                // Create new
+                await api.post('/campaign/create', payload);
+            }
             navigate('/creator/dashboard');
         } catch (err: any) {
             console.error(err);
-            setError('Failed to create campaign. Please try again.');
+            setError(id ? 'Failed to update campaign.' : 'Failed to create campaign. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -181,7 +218,7 @@ const CreateCampaign = () => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900">Create New Campaign</h1>
+                        <h1 className="text-xl font-bold text-gray-900">{id ? 'Edit Campaign' : 'Create New Campaign'}</h1>
                         <p className="text-gray-500 text-sm mt-1">Design a visually stunning campaign to attract top influencers.</p>
                     </div>
                 </div>
@@ -402,7 +439,7 @@ const CreateCampaign = () => {
                             className="px-8 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {loading ? <Loader2 className="animate-spin" size={20}/> : <Upload size={20}/>}
-                            {loading ? 'Creating Campaign...' : 'Publish Campaign'}
+                            {loading ? (id ? 'Updating...' : 'Creating Campaign...') : (id ? 'Update Campaign' : 'Publish Campaign')}
                         </button>
                     </div>
                 </form>

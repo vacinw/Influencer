@@ -126,7 +126,12 @@ const CampaignDetail = () => {
                 <div className="flex gap-2">
                     {isOwner ? (
                         <>
-                             <button className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium transition-colors">Edit Campaign</button>
+                             <button 
+                                 onClick={() => navigate(`/creator/campaigns/${id}/edit`)}
+                                 className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-sm font-medium transition-colors"
+                             >
+                                 Edit Campaign
+                             </button>
                              <button 
                                  onClick={() => navigate(`/creator/campaigns/${id}/applicants`)}
                                  className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm font-medium transition-colors"
