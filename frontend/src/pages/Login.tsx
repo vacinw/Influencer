@@ -24,15 +24,46 @@ const Login = () => {
             });
 
             if (response.status === 200) {
-                // Fetch user details to confirm session and get role/name
-                const userResp = await api.get('/auth/me');
-                if (userResp.status === 200) {
-                    login(userResp.data);
-                } else {
-                    // Fallback if /auth/me fails but login succeeded (rare)
-                    login(response.data);
+                const loginData = response.data;
+                if (loginData.token) {
+                    localStorage.setItem('token', loginData.token);
                 }
-                navigate('/');
+
+                try {
+                    const userResp = await api.get('/auth/me');
+                    if (userResp.status === 200) {
+                        const userData = userResp.data;
+                        login(userData);
+                        
+                        // Handle role being either a string or an object {id, name}
+                        const roleName = typeof userData.role === 'string' ? userData.role : userData.role?.name;
+
+                        if (roleName === 'CREATOR') {
+                            navigate('/creator/dashboard');
+                        } else if (roleName === 'RECEIVER' || roleName === 'INFLUENCER') {
+                             navigate('/receiver/dashboard');
+                        } else if (roleName === 'ADMIN') {
+                            navigate('/admin/dashboard');
+                        } else {
+                            navigate('/role-selection');
+                        }
+                    } else {
+                        navigate('/'); 
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch user details", e);
+                    // Even if detail fetch fails, if we have token, we are effectively logged in but might miss role info.
+                    // Try to use role from login response if available
+                    if (loginData.role) {
+                         const roleName = loginData.role;
+                         if (roleName === 'CREATOR') navigate('/creator/dashboard');
+                         else if (roleName === 'RECEIVER') navigate('/receiver/dashboard');
+                         else if (roleName === 'ADMIN') navigate('/admin/dashboard');
+                         else navigate('/');
+                    } else {
+                        navigate('/');
+                    }
+                }
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Login failed. Please check credentials.');

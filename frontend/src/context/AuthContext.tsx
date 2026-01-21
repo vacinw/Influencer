@@ -17,9 +17,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading: true,
     });
 
-    const login = (user: User) => {
+    const login = (data: any) => {
+        if (data.token) {
+            localStorage.setItem('token', data.token);
+        }
         setState({
-            user,
+            user: data, // or decode token if user data is minimal
             isAuthenticated: true,
             isLoading: false,
         });
@@ -31,6 +34,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
             console.error("Logout failed", error);
         } finally {
+            localStorage.removeItem('token');
             setState({
                 user: null,
                 isAuthenticated: false,
@@ -41,21 +45,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const checkAuth = async () => {
         try {
-            const response = await api.get('/auth/me'); // Using the new endpoint
-            if (response.status === 200) {
-                setState({
-                    user: response.data,
-                    isAuthenticated: true,
-                    isLoading: false,
-                });
+            // Priority 1: Check if we have a token in localStorage
+            let token = localStorage.getItem('token');
+
+            // Priority 2: Try to exchange cookie for token (if fresh login from OAuth)
+            if (!token) {
+                try {
+                    const tokenResp = await api.get('/auth/token');
+                    if (tokenResp.status === 200 && tokenResp.data.token) {
+                        token = tokenResp.data.token;
+                        localStorage.setItem('token', token!);
+                    }
+                } catch (e) {
+                    // No cookie or invalid
+                }
+            }
+
+            if (token) {
+                const response = await api.get('/auth/me');
+                if (response.status === 200) {
+                    setState({
+                        user: response.data,
+                        isAuthenticated: true,
+                        isLoading: false,
+                    });
+                } else {
+                    throw new Error("Invalid token");
+                }
             } else {
-                setState({
+                 setState({
                     user: null,
                     isAuthenticated: false,
                     isLoading: false,
                 });
             }
         } catch (error) {
+            localStorage.removeItem('token');
             setState({
                 user: null,
                 isAuthenticated: false,

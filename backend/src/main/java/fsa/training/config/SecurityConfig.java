@@ -5,12 +5,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -30,6 +33,12 @@ public class SecurityConfig {
     @Autowired
     private fsa.training.security.CustomOAuth2UserService customOAuth2UserService;
 
+    @Autowired
+    private fsa.training.security.jwt.AuthTokenFilter authTokenFilter;
+
+    @Autowired
+    private fsa.training.security.jwt.JwtUtils jwtUtils;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -44,14 +53,20 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationManager authenticationManager(org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/home", "/api/login", "/api/logout", "/register", "/login", "/css/**",
+                        .requestMatchers("/", "/home", "/api/login", "/api/logout", "/api/register", "/register", "/login", "/css/**",
                                 "/js/**", "/imgs/**",
-                                "/webjars/**", "/error", "/oauth2/**", "/api/users/role") // Added /api/users/role to
+                                "/webjars/**", "/error", "/oauth2/**", "/api/users/role", "/api/auth/**", "/api/campaign/public") // Added /api/auth/** for token exchange
                                                                                           // permitAll for now or keep
                                                                                           // authenticated
                         .permitAll()
@@ -62,9 +77,12 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/login") // Clean up URL
                         .successHandler((request, response, authentication) -> {
+                            String jwt = jwtUtils.generateJwtToken(authentication);
+                            fsa.training.entity.User user = (fsa.training.entity.User) authentication.getPrincipal();
+                            
                             response.setStatus(HttpServletResponse.SC_OK);
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"status\":\"success\",\"message\":\"Login successful\"}");
+                            response.getWriter().write("{\"status\":\"success\",\"token\":\"" + jwt + "\", \"role\":\"" + (user.getRole() != null ? user.getRole().getName() : "") + "\"}");
                         })
                         .failureHandler((request, response, exception) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -83,7 +101,7 @@ public class SecurityConfig {
                             response.getWriter().write("{\"status\":\"error\",\"message\":\"Unauthorized\"}");
                         }))
                 .logout(logout -> logout
-                        .logoutUrl("/api/logout") // Clean up URL
+                        .logoutUrl("/api/logout") // Logout is practically client-side in JWT, but we keep endpoint
                         .logoutSuccessHandler((request, response, authentication) -> {
                             response.setStatus(HttpServletResponse.SC_OK);
                             response.setContentType("application/json");
@@ -92,6 +110,8 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll());
+
+        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

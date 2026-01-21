@@ -20,7 +20,17 @@ public class Campaign {
     @Column(columnDefinition = "TEXT")
     private String description;
     
-    private String imageUrl;
+    @ElementCollection
+    @CollectionTable(name = "campaign_images", 
+                     joinColumns = @JoinColumn(name = "campaign_id", nullable = false))
+    @Column(name = "image_url")
+    private List<String> images = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "campaign_videos", 
+                     joinColumns = @JoinColumn(name = "campaign_id", nullable = false))
+    @Column(name = "video_url")
+    private List<String> videos = new ArrayList<>();
     
     private LocalDate deadline;
     
@@ -41,6 +51,19 @@ public class Campaign {
     @ManyToOne
     @JoinColumn(name = "creator_id")
     private User creator;
+    
+    private String layoutStyle; // "CLASSIC", "MODERN", "MINIMAL"
+
+    @org.hibernate.annotations.Formula("(SELECT count(a.id) FROM applications a WHERE a.campaign_id = id)")
+    private int applicantCount;
+
+    public int getApplicantCount() {
+        return applicantCount;
+    }
+
+    public void setApplicantCount(int applicantCount) {
+        this.applicantCount = applicantCount;
+    }
 
     // Getters and Setters
     public Long getId() {
@@ -67,12 +90,20 @@ public class Campaign {
         this.description = description;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public List<String> getImages() {
+        return images;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImages(List<String> images) {
+        this.images = images;
+    }
+
+    public List<String> getVideos() {
+        return videos;
+    }
+
+    public void setVideos(List<String> videos) {
+        this.videos = videos;
     }
 
     public LocalDate getDeadline() {
@@ -113,5 +144,13 @@ public class Campaign {
 
     public void setCreator(User creator) {
         this.creator = creator;
+    }
+
+    public String getLayoutStyle() {
+        return layoutStyle;
+    }
+
+    public void setLayoutStyle(String layoutStyle) {
+        this.layoutStyle = layoutStyle;
     }
 }

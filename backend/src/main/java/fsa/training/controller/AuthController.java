@@ -1,17 +1,14 @@
 package fsa.training.controller;
 
-import fsa.training.entity.User;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import fsa.training.dao.UserDao;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,37 +16,50 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private UserDao userDao;
+    @GetMapping("/token")
+    public ResponseEntity<?> getTokenFromCookie(HttpServletRequest request, HttpServletResponse response) {
+        String token = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("AUTH_TOKEN".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    // Clear the cookie after reading
+                    cookie.setMaxAge(0);
+                    cookie.setPath("/");
+                    response.addCookie(cookie);
+                    break;
+                }
+            }
+        }
 
+        if (token != null) {
+            Map<String, String> res = new HashMap<>();
+            res.put("token", token);
+            return ResponseEntity.ok(res);
+        } else {
+            // Return 200 with null token to avoid 401 errors in console (expected flow for unauth users)
+            return ResponseEntity.ok(Collections.singletonMap("token", null));
+        }
+    }
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.status(401).body("Not authenticated");
+    public ResponseEntity<?> getCurrentUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
         }
 
-        Object principal = auth.getPrincipal();
-        User user = null;
-
-        if (principal instanceof User) {
-            // Standard Spring Security User (from DB)
-            User principalUser = (User) principal;
-            // Refresh from DB to get latest
-            user = userDao.findById(principalUser.getId()).orElse(principalUser);
-
-        } else if (principal instanceof OAuth2User) {
-            // Google generic User
-            OAuth2User oauth2User = (OAuth2User) principal;
-            String email = oauth2User.getAttribute("email");
-            user = userDao.findByEmail(email);
+        fsa.training.entity.User user = (fsa.training.entity.User) authentication.getPrincipal();
+        Map<String, Object> roleMap = new HashMap<>();
+        if (user.getRole() != null) {
+            roleMap.put("id", user.getRole().getId());
+            roleMap.put("name", user.getRole().getName());
         }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", user.getId());
+        response.put("email", user.getEmail());
+        response.put("name", user.getName());
+        response.put("role", user.getRole() != null ? roleMap : null);
 
-        if (user == null) {
-            return ResponseEntity.status(401).body("User not found");
-        }
-
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(response);
     }
 }

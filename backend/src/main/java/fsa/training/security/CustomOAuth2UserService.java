@@ -44,12 +44,25 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             userDao.save(user);
         } else {
             // Update name if changed?
-            if (!user.getName().equals(name)) {
+            if (user.getName() != null && !user.getName().equals(name)) {
                 user.setName(name);
                 userDao.save(user);
             }
         }
 
-        return oAuth2User;
+        // Combine OAuth2 authorities with DB Role
+        java.util.Set<org.springframework.security.core.GrantedAuthority> authorities = new java.util.HashSet<>(oAuth2User.getAuthorities());
+        if (user.getRole() != null) {
+            authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + user.getRole().getName()));
+        }
+
+        String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails()
+                .getUserInfoEndpoint().getUserNameAttributeName();
+
+        return new org.springframework.security.oauth2.core.user.DefaultOAuth2User(
+                authorities,
+                oAuth2User.getAttributes(),
+                userNameAttributeName
+        );
     }
 }

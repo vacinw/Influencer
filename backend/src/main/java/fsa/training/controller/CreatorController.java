@@ -5,7 +5,12 @@ import fsa.training.dao.CampaignDao;
 import fsa.training.dao.UserDao;
 import fsa.training.entity.Campaign;
 import fsa.training.entity.CampaignApplication;
+import fsa.training.entity.CampaignApplication;
+import fsa.training.entity.Job;
+import fsa.training.entity.Milestone;
 import fsa.training.entity.User;
+import fsa.training.dao.JobDao;
+import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,6 +35,9 @@ public class CreatorController {
 
     @Autowired
     private CampaignApplicationDao campaignApplicationDao;
+
+    @Autowired
+    private JobDao jobDao;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -131,6 +139,42 @@ public class CreatorController {
 
         application.setStatus("APPROVED");
         campaignApplicationDao.save(application);
+
+        // Create Job
+        Job job = new Job();
+        job.setCampaign(campaign);
+        job.setInfluencer(application.getReceiver());
+        job.setCreatedAt(LocalDateTime.now());
+        job.setStatus("IN_PROGRESS");
+        job.setDescription("Hợp đồng hợp tác cho chiến dịch: " + campaign.getTitle());
+
+        // Default Milestones
+        Milestone m1 = new Milestone();
+        m1.setJob(job);
+        m1.setTitle("Lên kế hoạch nội dung");
+        m1.setDescription("Gửi kịch bản hoặc kế hoạch chi tiết.");
+        m1.setDeadline(LocalDateTime.now().plusDays(3));
+        m1.setStatus("PENDING");
+
+        Milestone m2 = new Milestone();
+        m2.setJob(job);
+        m2.setTitle("Bản nháp (Draft)");
+        m2.setDescription("Gửi video/bài viết nháp để duyệt.");
+        m2.setDeadline(LocalDateTime.now().plusDays(7));
+        m2.setStatus("PENDING");
+
+        Milestone m3 = new Milestone();
+        m3.setJob(job);
+        m3.setTitle("Đăng bài hoàn thiện");
+        m3.setDescription("Đăng bài lên mạng xã hội và gửi link báo cáo.");
+        m3.setDeadline(LocalDateTime.now().plusDays(10));
+        m3.setStatus("PENDING");
+
+        job.getMilestones().add(m1);
+        job.getMilestones().add(m2);
+        job.getMilestones().add(m3);
+
+        jobDao.save(job);
 
         return ResponseEntity.ok("Đã phê duyệt ứng viên thành công!");
     }

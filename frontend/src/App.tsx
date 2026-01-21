@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { useEffect } from 'react';
 import './index.css';
 
@@ -9,13 +10,16 @@ import Home from './pages/Home';
 import RoleSelection from './pages/RoleSelection';
 
 import AdminDashboard from './pages/admin/Dashboard';
+import CreateCampaign from './pages/creator/CreateCampaign';
+import CampaignDetail from './pages/creator/CampaignDetail';
+import ApplicantsList from './pages/creator/ApplicantsList';
 import CreatorDashboard from './pages/creator/Dashboard';
 import ReceiverDashboard from './pages/receiver/Dashboard';
+import JobDetail from './pages/JobDetail';
+import WalletPage from './pages/WalletPage';
 
 import MainLayout from './layouts/MainLayout';
 
-// Placeholder components for routing structure
-// const Home = () => <div className="p-8"><h1>Home Page</h1></div>;
 const NotFound = () => <div className="p-8"><h1>404 Not Found</h1></div>;
 
 function AppRoutes() {
@@ -24,8 +28,6 @@ function AppRoutes() {
   const location = useLocation();
 
   useEffect(() => {
-    // If authenticated, not loading, and user has no role, redirect to selection
-    // Also avoid loop if already on /role-selection
     if (!isLoading && isAuthenticated && user && !user.role && location.pathname !== '/role-selection') {
       navigate('/role-selection');
     }
@@ -41,7 +43,12 @@ function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/creator/dashboard" element={<CreatorDashboard />} />
+        <Route path="/creator/campaigns/new" element={<CreateCampaign />} />
+        <Route path="/creator/campaigns/:id" element={<CampaignDetail />} />
+        <Route path="/creator/campaigns/:id/applicants" element={<ApplicantsList />} />
+        <Route path="/wallet" element={<WalletPage />} />
         <Route path="/receiver/dashboard" element={<ReceiverDashboard />} />
+        <Route path="/job/:id" element={<JobDetail />} />
       </Route>
 
       <Route path="/login" element={<Login />} />
@@ -57,7 +64,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppRoutes />
+        <ToastProvider>
+          <AppRoutes />
+        </ToastProvider>
       </AuthProvider>
     </Router>
   );

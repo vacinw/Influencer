@@ -35,10 +35,16 @@ const Header = () => {
                             </Link>
 
                             {user?.role?.name === 'CREATOR' && (
-                                <Link to="/creator/dashboard" className="border-transparent text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Dashboard</Link>
+                                <>
+                                    <Link to="/creator/dashboard" className="border-transparent text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Dashboard</Link>
+                                    <Link to="/wallet" className="border-transparent text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Wallet</Link>
+                                </>
                             )}
                             {user?.role?.name === 'RECEIVER' && (
-                                <Link to="/receiver/dashboard" className="border-transparent text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Dashboard</Link>
+                                <>
+                                    <Link to="/receiver/dashboard" className="border-transparent text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Dashboard</Link>
+                                    <Link to="/wallet" className="border-transparent text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Wallet</Link>
+                                </>
                             )}
                             {user?.role?.name === 'ADMIN' && (
                                 <Link to="/admin/dashboard" className="border-transparent text-gray-500 hover:text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Admin</Link>
