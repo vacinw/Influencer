@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle, XCircle, ExternalLink, Loader2, Send, Plus, Flag, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, ExternalLink, Loader2, Send, Plus, Flag, AlertCircle, Briefcase } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { InstagramEmbed, TikTokEmbed, YouTubeEmbed } from 'react-social-media-embed';
@@ -121,36 +121,50 @@ const JobDetail = () => {
         }
     };
 
-    const renderEvidence = (url: string) => {
-        if (!url) return null;
+    const renderSingleEvidence = (url: string, index: number) => {
         let containerClass = "mx-auto overflow-hidden rounded-lg shadow-sm border border-gray-200 mt-2";
+        
+        // Helper to render "Open Link" header for embeds might fail
+        const renderEmbedHeader = (label: string, icon: any) => (
+             <div className="flex justify-between items-center bg-gray-50 px-3 py-2 border-b border-gray-200 text-xs">
+                 <div className="flex items-center gap-2 text-gray-700 font-medium">
+                     {icon} {label}
+                 </div>
+                 <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:underline">
+                     <ExternalLink size={12} className="mr-1" /> Open in New Tab
+                 </a>
+             </div>
+        );
 
         if (url.includes('tiktok.com')) {
             const match = url.match(/video\/(\d+)/);
             if (match && match[1]) {
                 const videoId = match[1];
                 return (
-                    <div className={`${containerClass} w-full max-w-[325px] h-[575px]`}>
-                        <iframe
-                            src={`https://www.tiktok.com/embed/v2/${videoId}`}
-                            className="w-full h-full border-0"
-                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                            title="TikTok Video"
-                        ></iframe>
+                    <div key={index} className={`${containerClass} w-full max-w-[325px]`}>
+                        {renderEmbedHeader('TikTok Video', <span className="font-bold">♪</span>)}
+                        <div className="h-[575px]">
+                            <iframe
+                                src={`https://www.tiktok.com/embed/v2/${videoId}`}
+                                className="w-full h-full border-0"
+                                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                title="TikTok Video"
+                            ></iframe>
+                        </div>
                     </div>
                 );
             }
-            return <div className={`${containerClass} w-full max-w-[325px]`}><TikTokEmbed url={url} width="100%" /></div>;
+            return <div key={index} className={`${containerClass} w-full max-w-[325px]`}><TikTokEmbed url={url} width="100%" /></div>;
         }
         if (url.includes('instagram.com')) {
-             return <div className={`${containerClass} w-full max-w-[400px]`}><InstagramEmbed url={url} width="100%" /></div>;
+             return <div key={index} className={`${containerClass} w-full max-w-[400px]`}><InstagramEmbed url={url} width="100%" /></div>;
         }
         if (url.includes('youtube.com') || url.includes('youtu.be')) {
-             return <div className={`${containerClass} w-full max-w-[600px]`}><YouTubeEmbed url={url} width="100%" /></div>;
+             return <div key={index} className={`${containerClass} w-full max-w-[600px]`}><YouTubeEmbed url={url} width="100%" /></div>;
         }
         if (url.includes('facebook.com')) {
              return (
-                <div className={`${containerClass} w-full max-w-[550px]`}>
+                <div key={index} className={`${containerClass} w-full max-w-[550px]`}>
                     <iframe 
                         src={`https://www.facebook.com/plugins/post.php?href=${encodeURIComponent(url)}&show_text=true&width=500`} 
                         width="100%" 
@@ -163,13 +177,77 @@ const JobDetail = () => {
                 </div>
              );
         }
+
+        if (url.includes('drive.google.com')) {
+            // Folder Support
+            if (url.includes('/folders/')) {
+                 const folderMatch = url.match(/\/folders\/([a-zA-Z0-9_-]+)/);
+                 if (folderMatch && folderMatch[1]) {
+                      return (
+                        <div key={index} className={`${containerClass} w-full`}>
+                            {renderEmbedHeader('Google Drive Folder', <Briefcase size={12}/>)}
+                            <div className="h-[600px] relative bg-gray-50 flex flex-col items-center justify-center">
+                                <p className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 text-xs text-center z-0 px-4">
+                                    If this preview doesn't load, please check if the folder is shared with "Anyone with the link". <br/>
+                                    Otherwise, click "Open in New Tab" above.
+                                </p>
+                                <iframe 
+                                    src={`https://drive.google.com/embeddedfolderview?id=${folderMatch[1]}#grid`}
+                                    width="100%" 
+                                    height="100%" 
+                                    className="relative z-10"
+                                    style={{border: 'none'}}
+                                    title="Google Drive Folder"
+                                ></iframe>
+                            </div>
+                        </div>
+                      );
+                 }
+            }
+
+            // File Support
+            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return (
+                    <div key={index} className={`${containerClass} w-full`}>
+                         {renderEmbedHeader('Google Drive File', <Briefcase size={12}/>)}
+                         <div className="h-[600px] relative bg-gray-50 flex flex-col items-center justify-center">
+                            <p className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 text-xs text-center z-0 px-4">
+                                If this preview doesn't load, please check if the file is shared with "Anyone with the link".
+                            </p>
+                             <iframe 
+                                src={`https://drive.google.com/file/d/${match[1]}/preview`}
+                                width="100%" 
+                                height="100%" 
+                                className="relative z-10"
+                                style={{border: 'none'}}
+                                title="Google Drive Preview"
+                                allow="autoplay"
+                            ></iframe>
+                        </div>
+                    </div>
+                );
+            }
+        }
         
         return (
-             <div className="mb-4 p-3 bg-gray-50 rounded border border-gray-200 mt-2 flex items-center justify-between">
+             <div key={index} className="mb-4 p-3 bg-gray-50 rounded border border-gray-200 mt-2 flex items-center justify-between">
                 <span className="text-sm text-gray-600 truncate mr-2">{url}</span>
                 <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-600 hover:underline shrink-0">
                     <ExternalLink size={14} className="mr-1" /> Open
                 </a>
+            </div>
+        );
+    };
+
+    const renderEvidence = (urlString: string) => {
+        if (!urlString) return null;
+        // Split by whitespace, comma, or newline
+        const urls = urlString.split(/[\s,]+/).filter(u => u.length > 0);
+        
+        return (
+            <div className="space-y-4">
+                {urls.map((url, idx) => renderSingleEvidence(url, idx))}
             </div>
         );
     };

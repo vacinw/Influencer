@@ -59,6 +59,11 @@ public class AuthController {
         response.put("email", user.getEmail());
         response.put("name", user.getName());
         response.put("role", user.getRole() != null ? roleMap : null);
+        response.put("avatarUrl", user.getAvatarUrl());
+        response.put("bio", user.getBio());
+        response.put("phone", user.getPhone());
+        response.put("socialLinks", user.getSocialLinks());
+        response.put("isVerified", user.getVerified());
 
         return ResponseEntity.ok(response);
     }

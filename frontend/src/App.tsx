@@ -17,6 +17,8 @@ import CreatorDashboard from './pages/creator/Dashboard';
 import ReceiverDashboard from './pages/receiver/Dashboard';
 import JobDetail from './pages/JobDetail';
 import WalletPage from './pages/WalletPage';
+import VerificationPage from './pages/VerificationPage';
+import ProfilePage from './pages/ProfilePage';
 
 import MainLayout from './layouts/MainLayout';
 
@@ -50,6 +52,8 @@ function AppRoutes() {
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/receiver/dashboard" element={<ReceiverDashboard />} />
         <Route path="/job/:id" element={<JobDetail />} />
+        <Route path="/verification" element={<VerificationPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
 
       <Route path="/login" element={<Login />} />

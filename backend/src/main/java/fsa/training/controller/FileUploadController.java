@@ -20,11 +20,15 @@ public class FileUploadController {
     @PostMapping
     public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
+            System.out.println("Uploading file: " + file.getOriginalFilename());
             String url = cloudinaryService.uploadFile(file);
+            System.out.println("Upload success: " + url);
             Map<String, String> response = new HashMap<>();
             response.put("url", url);
             return ResponseEntity.ok(response);
-        } catch (IOException e) {
+        } catch (Exception e) {
+            System.err.println("UPLOAD ERROR: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.internalServerError().body(null);
         }
     }
