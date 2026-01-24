@@ -36,12 +36,15 @@ public class User implements UserDetails {
     
     private String phone;
     
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_social_links", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "link")
     private Collection<String> socialLinks;
     
     private Double rating = 0.0;
+    
+    @Column(columnDefinition = "boolean default false")
+    private Boolean isVerified = false;
 
     
     @Override
@@ -157,5 +160,13 @@ public class User implements UserDetails {
 
     public void setRating(Double rating) {
         this.rating = rating;
+    }
+
+    public Boolean getVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(Boolean verified) {
+        isVerified = verified;
     }
 }

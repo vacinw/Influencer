@@ -7,6 +7,11 @@ export interface User {
         name: string;
     };
     authorities?: Array<{ authority: string }>;
+    avatarUrl?: string;
+    socialLinks?: string[];
+    bio?: string;
+    phone?: string;
+    isVerified?: boolean;
 }
 
 export interface AuthState {

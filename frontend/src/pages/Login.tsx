@@ -52,14 +52,28 @@ const Login = () => {
                     }
                 } catch (e) {
                     console.error("Failed to fetch user details", e);
-                    // Even if detail fetch fails, if we have token, we are effectively logged in but might miss role info.
-                    // Try to use role from login response if available
-                    if (loginData.role) {
-                         const roleName = loginData.role;
-                         if (roleName === 'CREATOR') navigate('/creator/dashboard');
-                         else if (roleName === 'RECEIVER') navigate('/receiver/dashboard');
-                         else if (roleName === 'ADMIN') navigate('/admin/dashboard');
-                         else navigate('/');
+                    // Fallback to minimal login data if /auth/me fails (e.g. backend error)
+                    // We must still call login() to update the context!
+                    if (loginData) {
+                        // Construct a minimal user object from what we have
+                        const minimalUser = {
+                            id: 0, // Fallback ID
+                            name: loginData.username || email, // approximate
+                            email: email,
+                            role: typeof loginData.role === 'string' ? { id: 0, name: loginData.role } : loginData.role,
+                            token: loginData.token
+                        };
+                        login(minimalUser);
+
+                        if (loginData.role) {
+                             const roleName = loginData.role;
+                             if (roleName === 'CREATOR') navigate('/creator/dashboard');
+                             else if (roleName === 'RECEIVER') navigate('/receiver/dashboard');
+                             else if (roleName === 'ADMIN') navigate('/admin/dashboard');
+                             else navigate('/');
+                        } else {
+                            navigate('/');
+                        }
                     } else {
                         navigate('/');
                     }

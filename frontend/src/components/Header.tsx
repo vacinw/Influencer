@@ -1,13 +1,27 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Menu, User, X, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const Header = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const profileMenuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+                setIsProfileOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const handleLogout = async () => {
         await logout();
@@ -55,16 +69,20 @@ const Header = () => {
                     {/* Right Side Actions */}
                     <div className="hidden sm:ml-6 sm:flex sm:items-center">
                         {isAuthenticated ? (
-                            <div className="ml-3 relative">
+                            <div className="ml-3 relative" ref={profileMenuRef}>
                                 <div>
                                     <button
                                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                                         className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                     >
                                         <span className="sr-only">Open user menu</span>
-                                        <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
-                                            <User size={18} />
-                                        </div>
+                                        {user?.avatarUrl ? (
+                                            <img src={user.avatarUrl} alt={user.name} className="h-8 w-8 rounded-full object-cover" />
+                                        ) : (
+                                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                                <User size={18} />
+                                            </div>
+                                        )}
                                         <span className="ml-2 text-gray-700 font-medium">{user?.name}</span>
                                         <ChevronDown size={16} className="ml-1 text-gray-400" />
                                     </button>
@@ -76,6 +94,7 @@ const Header = () => {
                                                 Signed in as <br /> <strong className="text-gray-900">{user?.email}</strong>
                                             </div>
                                             <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</Link>
+                                            <Link to="/verification" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Verification Status</Link>
                                             <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</Link>
                                             <button
                                                 onClick={handleLogout}
@@ -121,9 +140,13 @@ const Header = () => {
                         {isAuthenticated ? (
                             <div className="flex items-center px-4">
                                 <div className="flex-shrink-0">
-                                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                                        <User size={20} />
-                                    </div>
+                                    {user?.avatarUrl ? (
+                                        <img src={user.avatarUrl} alt={user.name} className="h-10 w-10 rounded-full object-cover" />
+                                    ) : (
+                                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                                            <User size={20} />
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="ml-3">
                                     <div className="text-base font-medium text-gray-800">{user?.name}</div>
