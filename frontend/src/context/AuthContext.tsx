@@ -45,6 +45,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const checkAuth = async () => {
         try {
+            // Priority 0: Check if there's a token in the URL (from OAuth redirect)
+            const urlParams = new URLSearchParams(window.location.search);
+            const tokenFromUrl = urlParams.get('token');
+            if (tokenFromUrl) {
+                localStorage.setItem('token', tokenFromUrl);
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
             // Priority 1: Check if we have a token in localStorage
             let token = localStorage.getItem('token');
 
@@ -73,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     throw new Error("Invalid token");
                 }
             } else {
-                 setState({
+                setState({
                     user: null,
                     isAuthenticated: false,
                     isLoading: false,

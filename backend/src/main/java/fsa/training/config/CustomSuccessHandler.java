@@ -26,22 +26,14 @@ public class CustomSuccessHandler implements AuthenticationSuccessHandler {
 
         String token = jwtUtils.generateJwtToken(authentication);
 
-        // Create a short-lived cookie for token transfer
-        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("AUTH_TOKEN", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // Set to true in production with HTTPS
-        cookie.setPath("/");
-        cookie.setMaxAge(60); // 60 seconds is enough for the frontend to grab it
-        response.addCookie(cookie);
-
-        String redirectUrl = frontendUrl + "/role-selection";
+        String redirectUrl = frontendUrl + "/role-selection?token=" + token;
 
         if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
-            redirectUrl = frontendUrl + "/admin/dashboard";
+            redirectUrl = frontendUrl + "/admin/dashboard?token=" + token;
         } else if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_CREATOR"))) {
-            redirectUrl = frontendUrl + "/creator/dashboard";
+            redirectUrl = frontendUrl + "/creator/dashboard?token=" + token;
         } else if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_RECEIVER"))) {
-            redirectUrl = frontendUrl + "/receiver/dashboard";
+            redirectUrl = frontendUrl + "/receiver/dashboard?token=" + token;
         }
 
         response.sendRedirect(redirectUrl);
