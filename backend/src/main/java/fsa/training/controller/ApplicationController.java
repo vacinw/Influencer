@@ -52,6 +52,9 @@ public class ApplicationController {
         return null;
     }
 
+    @Autowired
+    private fsa.training.dao.NotificationDao notificationDao;
+
     @PostMapping("/apply")
     public ResponseEntity<?> apply(@RequestBody Map<String, Object> payload) {
         User user = getCurrentUser();
@@ -87,8 +90,20 @@ public class ApplicationController {
             app.setMessage(message);
             app.setBidAmount(bidAmount);
             app.setStatus("PENDING");
-            
+
             applicationDao.save(app);
+
+            // Create notification for creator
+            if (campaign.getCreator() != null) {
+                fsa.training.entity.Notification notification = new fsa.training.entity.Notification();
+                notification.setUser(campaign.getCreator());
+                notification.setTitle("Có ứng viên mới");
+                notification.setContent(
+                        "User " + user.getName() + " đã ứng tuyển vào chiến dịch " + campaign.getTitle() + " của bạn.");
+                notification.setLink("/creator/campaigns/" + campaign.getId() + "/applicants");
+                notificationDao.save(notification);
+            }
+
             return ResponseEntity.ok(app);
 
         } catch (Exception e) {
@@ -116,23 +131,23 @@ public class ApplicationController {
         List<Application> applications = applicationDao.findByCampaign(campaign);
         return ResponseEntity.ok(applications);
     }
-    
+
     @GetMapping("/my-applications")
     public ResponseEntity<?> getMyApplications(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String status
-    ) {
+            @RequestParam(required = false) String status) {
         User user = getCurrentUser();
         if (user == null) {
             return ResponseEntity.status(401).body("Unauthorized");
         }
 
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("id").descending());
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
+                org.springframework.data.domain.Sort.by("id").descending());
 
         org.springframework.data.jpa.domain.Specification<Application> spec = (root, query, cb) -> {
             java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
-            
+
             // Filter by Receiver
             predicates.add(cb.equal(root.get("receiver"), user));
 
@@ -162,7 +177,7 @@ public class ApplicationController {
 
         // Only Creator of the campaign can update status
         if (!app.getCampaign().getCreator().getId().equals(user.getId())) {
-             return ResponseEntity.status(403).body("Access denied");
+            return ResponseEntity.status(403).body("Access denied");
         }
 
         String newStatus = payload.get("status");
@@ -180,7 +195,7 @@ public class ApplicationController {
                     job.setDescription(app.getCampaign().getDescription());
                     job.setStatus("IN_PROGRESS");
                     job.setCreatedAt(LocalDateTime.now());
-                    
+
                     job = jobDao.save(job);
 
                     // Create default milestone
@@ -189,8 +204,8 @@ public class ApplicationController {
                     milestone.setTitle("Final Deliverable");
                     milestone.setDescription("Submit your work evidence here.");
                     milestone.setStatus("PENDING");
-                    milestone.setDeadline(app.getCampaign().getDeadline().atStartOfDay()); 
-                    
+                    milestone.setDeadline(app.getCampaign().getDeadline().atStartOfDay());
+
                     milestoneDao.save(milestone);
                 }
             }
@@ -204,8 +219,9 @@ public class ApplicationController {
     public ResponseEntity<?> syncJobs() {
         User user = getCurrentUser();
         // Allow Creator or Admin or Receiver (to self-repair)
-        if (user == null) return ResponseEntity.status(401).body("Unauthorized");
-        
+        if (user == null)
+            return ResponseEntity.status(401).body("Unauthorized");
+
         List<Application> acceptedApps = applicationDao.findByStatus("ACCEPTED");
         int count = 0;
         for (Application app : acceptedApps) {
@@ -218,7 +234,7 @@ public class ApplicationController {
                     job.setDescription(app.getCampaign().getDescription());
                     job.setStatus("IN_PROGRESS");
                     job.setCreatedAt(LocalDateTime.now());
-                    
+
                     job = jobDao.save(job);
 
                     // Create default milestone
@@ -227,16 +243,16 @@ public class ApplicationController {
                     milestone.setTitle("Final Deliverable");
                     milestone.setDescription("Submit your work evidence here.");
                     milestone.setStatus("PENDING");
-                     if (app.getCampaign().getDeadline() != null) {
+                    if (app.getCampaign().getDeadline() != null) {
                         milestone.setDeadline(app.getCampaign().getDeadline().atStartOfDay());
                     } else {
                         milestone.setDeadline(LocalDateTime.now().plusDays(7));
                     }
-                    
+
                     milestoneDao.save(milestone);
                     count++;
                 } catch (Exception e) {
-                   System.err.println("Failed to sync job for app " + app.getId() + ": " + e.getMessage());
+                    System.err.println("Failed to sync job for app " + app.getId() + ": " + e.getMessage());
                 }
             }
         }

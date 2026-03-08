@@ -39,6 +39,9 @@ public class SecurityConfig {
     @Autowired
     private fsa.training.security.jwt.JwtUtils jwtUtils;
 
+    @org.springframework.beans.factory.annotation.Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -53,7 +56,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration authConfig) throws Exception {
+    public AuthenticationManager authenticationManager(
+            org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration authConfig)
+            throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
@@ -64,11 +69,13 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/home", "/api/login", "/api/logout", "/api/register", "/register", "/login", "/css/**",
+                        .requestMatchers("/", "/home", "/api/login", "/api/logout", "/api/register", "/register",
+                                "/login", "/css/**",
                                 "/js/**", "/imgs/**",
-                                "/webjars/**", "/error", "/oauth2/**", "/api/users/role", "/api/auth/**", "/api/campaign/public") // Added /api/auth/** for token exchange
-                                                                                          // permitAll for now or keep
-                                                                                          // authenticated
+                                "/webjars/**", "/error", "/oauth2/**", "/api/users/role", "/api/auth/**",
+                                "/api/campaign/public", "/api/sepay/**") // Added /api/auth/** for token exchange
+                        // permitAll for now or keep
+                        // authenticated
                         .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/creator/**").hasAnyRole("CREATOR", "ADMIN")
@@ -79,10 +86,11 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             String jwt = jwtUtils.generateJwtToken(authentication);
                             fsa.training.entity.User user = (fsa.training.entity.User) authentication.getPrincipal();
-                            
+
                             response.setStatus(HttpServletResponse.SC_OK);
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"status\":\"success\",\"token\":\"" + jwt + "\", \"role\":\"" + (user.getRole() != null ? user.getRole().getName() : "") + "\"}");
+                            response.getWriter().write("{\"status\":\"success\",\"token\":\"" + jwt + "\", \"role\":\""
+                                    + (user.getRole() != null ? user.getRole().getName() : "") + "\"}");
                         })
                         .failureHandler((request, response, exception) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -119,7 +127,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); // Vite dev server
+        configuration.setAllowedOrigins(Arrays.asList(frontendUrl, "http://localhost:5173", "http://localhost:5174")); // Hỗ
+                                                                                                                       // trợ
+                                                                                                                       // dev
+                                                                                                                       // server
+                                                                                                                       // và
+                                                                                                                       // production
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

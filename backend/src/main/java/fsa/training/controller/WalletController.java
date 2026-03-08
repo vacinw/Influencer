@@ -71,6 +71,7 @@ public class WalletController {
         Map<String, Object> response = new HashMap<>();
         response.put("balance", wallet.getBalance());
         response.put("transactions", recentTransactions);
+        response.put("userId", user.getId()); // For payment syntax
 
         return ResponseEntity.ok(response);
     }
@@ -90,7 +91,7 @@ public class WalletController {
             // Add other mock payment fields if necessary
 
             Wallet wallet = getOrCreateWallet(user);
-            
+
             // Update Balance
             wallet.setBalance(wallet.getBalance() + amount);
             walletDao.save(wallet);
@@ -127,7 +128,7 @@ public class WalletController {
             }
 
             Wallet wallet = getOrCreateWallet(user);
-            
+
             if (wallet.getBalance() < amount) {
                 return ResponseEntity.badRequest().body("Insufficient funds");
             }

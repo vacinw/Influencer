@@ -11,29 +11,29 @@ const Home = () => {
                         <div className="mt-24 sm:mt-32 lg:mt-16">
                             <a href="#" className="inline-flex space-x-6">
                                 <span className="rounded-full bg-indigo-600/10 px-3 py-1 text-sm font-semibold leading-6 text-indigo-600 ring-1 ring-inset ring-indigo-600/10">
-                                    What's new
+                                    Có gì mới
                                 </span>
                                 <span className="inline-flex items-center space-x-2 text-sm font-medium leading-6 text-gray-600">
-                                    <span>Just shipped v1.0</span>
+                                    <span>Vừa ra mắt phiên bản v1.0</span>
                                 </span>
                             </a>
                         </div>
                         <h1 className="mt-10 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                            Connect Brands with Top Creators
+                            Kết Nối Thương Hiệu Với Nhãn Hàng Sáng Tạo Hàng Đầu
                         </h1>
                         <p className="mt-6 text-lg leading-8 text-gray-600">
-                            InfluConnect is the premier platform for brands to find, manage, and pay influencers for impactful marketing campaigns.
-                            Start your next viral campaign today.
+                            InfluConnect là nền tảng hàng đầu dành cho thương hiệu để tìm kiếm, quản lý và thanh toán cho Influencer trong các chiến dịch marketing hiệu quả.
+                            Bắt đầu chiến dịch bùng nổ của bạn ngay hôm nay.
                         </p>
                         <div className="mt-10 flex items-center gap-x-6">
                             <Link
                                 to="/register"
                                 className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                             >
-                                Get started
+                                Bắt đầu ngay
                             </Link>
                             <Link to="/explore" className="text-sm font-semibold leading-6 text-gray-900 flex items-center group">
-                                Explore creators <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                Khám phá Creators <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
                     </div>
@@ -57,12 +57,12 @@ const Home = () => {
             {/* Feature Section */}
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto max-w-2xl lg:text-center">
-                    <h2 className="text-base font-semibold leading-7 text-indigo-600">Faster Growth</h2>
+                    <h2 className="text-base font-semibold leading-7 text-indigo-600">Phát Triển Nhanh Chóng</h2>
                     <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                        Everything you need to manage campaigns
+                        Mọi công cụ bạn cần để quản lý chiến dịch
                     </p>
                     <p className="mt-6 text-lg leading-8 text-gray-600">
-                        From discovery to payment, InfluConnect streamlines the entire influencer marketing workflow.
+                        Từ khâu tìm kiếm đến thanh toán, InfluConnect tối ưu hóa toàn bộ quy trình Influencer Marketing.
                     </p>
                 </div>
                 <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
@@ -72,10 +72,10 @@ const Home = () => {
                                 <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
                                     <TrendingUp className="h-6 w-6 text-white" aria-hidden="true" />
                                 </div>
-                                Analytics that matter
+                                Phân Tích Chuyên Sâu
                             </dt>
                             <dd className="mt-2 text-base leading-7 text-gray-600">
-                                Track ROI, engagement rates, and reach in real-time. Make data-driven decisions.
+                                Theo dõi tỷ suất sinh lời (ROI), tỷ lệ tương tác và phạm vi tiếp cận theo thời gian thực. Đưa ra quyết định dựa trên dữ liệu.
                             </dd>
                         </div>
                         <div className="relative pl-16">
@@ -83,10 +83,10 @@ const Home = () => {
                                 <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
                                     <Users className="h-6 w-6 text-white" aria-hidden="true" />
                                 </div>
-                                Vetted Creators
+                                Creator Đã Qua Kiểm Duyệt
                             </dt>
                             <dd className="mt-2 text-base leading-7 text-gray-600">
-                                Access a network of verified influencers across every niche and platform.
+                                Tiếp cận mạng lưới các Influencer đã được xác minh.
                             </dd>
                         </div>
                         <div className="relative pl-16">
@@ -94,10 +94,10 @@ const Home = () => {
                                 <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
                                     <Shield className="h-6 w-6 text-white" aria-hidden="true" />
                                 </div>
-                                Secure Payments
+                                Thanh Toán An Toàn
                             </dt>
                             <dd className="mt-2 text-base leading-7 text-gray-600">
-                                Escrow-style payments ensuring creators get paid and brands get their content.
+                                Thanh toán qua hệ thống tạm giữ (Escrow) đảm bảo Creator nhận được tiền và thương hiệu nhận được nội dung đúng hẹn.
                             </dd>
                         </div>
                         <div className="relative pl-16">
@@ -105,10 +105,10 @@ const Home = () => {
                                 <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
                                     <CheckCircle className="h-6 w-6 text-white" aria-hidden="true" />
                                 </div>
-                                Easy Management
+                                Quản Lý Dễ Dàng
                             </dt>
                             <dd className="mt-2 text-base leading-7 text-gray-600">
-                                Manage contracts, content approvals, and more in one unified dashboard.
+                                Quản lý hợp đồng, duyệt nội dung và nhiều tính năng khác trong một bảng điều khiển thống nhất.
                             </dd>
                         </div>
                     </dl>
@@ -119,15 +119,15 @@ const Home = () => {
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <dl className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
                     <div className="mx-auto flex max-w-xs flex-col gap-y-4">
-                        <dt className="text-base leading-7 text-gray-600">Transactions every 24 hours</dt>
-                        <dd className="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">44 million</dd>
+                        <dt className="text-base leading-7 text-gray-600">Giao dịch mỗi 24 giờ</dt>
+                        <dd className="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">44 triệu</dd>
                     </div>
                     <div className="mx-auto flex max-w-xs flex-col gap-y-4">
-                        <dt className="text-base leading-7 text-gray-600">Assets under holding</dt>
-                        <dd className="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">$119 trillion</dd>
+                        <dt className="text-base leading-7 text-gray-600">Tài sản đang lưu giữ</dt>
+                        <dd className="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">$119 nghìn tỷ</dd>
                     </div>
                     <div className="mx-auto flex max-w-xs flex-col gap-y-4">
-                        <dt className="text-base leading-7 text-gray-600">New users annually</dt>
+                        <dt className="text-base leading-7 text-gray-600">Người dùng mới hàng năm</dt>
                         <dd className="order-first text-3xl font-semibold tracking-tight text-gray-900 sm:text-5xl">46,000</dd>
                     </div>
                 </dl>

@@ -19,6 +19,7 @@ import JobDetail from './pages/JobDetail';
 import WalletPage from './pages/WalletPage';
 import VerificationPage from './pages/VerificationPage';
 import ProfilePage from './pages/ProfilePage';
+import ExplorePage from './pages/ExplorePage';
 
 import MainLayout from './layouts/MainLayout';
 
@@ -43,6 +44,7 @@ function AppRoutes() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/explore" element={<ExplorePage />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/creator/dashboard" element={<CreatorDashboard />} />
         <Route path="/creator/campaigns/new" element={<CreateCampaign />} />

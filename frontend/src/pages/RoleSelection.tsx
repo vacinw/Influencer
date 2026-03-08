@@ -33,10 +33,10 @@ const RoleSelection = () => {
                     <div className="w-10 h-10 bg-black rounded-lg transform rotate-45"></div>
                 </div>
                 <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    Select your account type
+                    Chọn loại tài khoản
                 </h2>
                 <p className="mt-2 text-center text-sm text-gray-600">
-                    Choose how you want to use InfluConnect
+                    Bạn muốn tham gia InfluConnect với tư cách nào?
                 </p>
             </div>
 
@@ -56,10 +56,10 @@ const RoleSelection = () => {
                         <div className="mt-4">
                             <h3 className="text-lg font-medium">
                                 <span className="absolute inset-0" aria-hidden="true" />
-                                I want to Hire (Creator)
+                                Tôi muốn tìm Job (Nhà sáng tạo)
                             </h3>
                             <p className="mt-2 text-sm text-gray-500">
-                                Find influencers, manage campaigns, and grow your brand.
+                                Nhận job review, quản lý chiến dịch và phát triển thương hiệu cá nhân.
                             </p>
                         </div>
                     </button>
@@ -78,10 +78,10 @@ const RoleSelection = () => {
                         <div className="mt-4">
                             <h3 className="text-lg font-medium">
                                 <span className="absolute inset-0" aria-hidden="true" />
-                                I want to Work (KOL/Receiver)
+                                Tôi muốn thuê Influencer (Nhãn hàng)
                             </h3>
                             <p className="mt-2 text-sm text-gray-500">
-                                Monetize your influence and connect with top brands.
+                                Đăng chiến dịch, tìm kiếm và kết nối với các KOL/Influencer hàng đầu.
                             </p>
                         </div>
                     </button>

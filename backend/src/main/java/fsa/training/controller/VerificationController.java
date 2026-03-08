@@ -23,7 +23,7 @@ public class VerificationController {
 
     @Autowired
     private UserDao userDao;
-    
+
     @Autowired
     private fsa.training.service.AIService aiService;
 
@@ -45,49 +45,60 @@ public class VerificationController {
     @PostMapping("/request")
     public ResponseEntity<?> createRequest(@RequestBody Map<String, String> payload) {
         User user = getCurrentUser();
-        if (user == null) return ResponseEntity.status(401).body("Unauthorized");
+        if (user == null)
+            return ResponseEntity.status(401).body("Unauthorized");
 
-        // Check if pending exists
-        if (verificationDao.findByUserAndStatus(user, "PENDING").isPresent()) {
-            return ResponseEntity.badRequest().body("You already have a pending verification request.");
+        // Check if pending exists for THIS specific document type
+        List<VerificationRequest> pendingRequests = verificationDao.findByUserAndStatus(user, "PENDING");
+        boolean hasPendingSameType = pendingRequests.stream()
+                .anyMatch(r -> r.getDocumentType().equals(payload.get("documentType")));
+
+        if (hasPendingSameType) {
+            return ResponseEntity.badRequest().body("You already have a pending request for this document type.");
         }
 
         VerificationRequest req = new VerificationRequest();
         req.setUser(user);
         req.setDocumentType(payload.get("documentType"));
         req.setDocumentUrl(payload.get("documentUrl"));
-        
+
         // AI AUTO-VERIFICATION LOGIC
         // Only apply for ID_CARD (CCCD) as Business License AI is harder to verify
         if ("ID_CARD".equals(payload.get("documentType"))) {
             fsa.training.service.AIService.AIResult aiResult = aiService.validateIdCard(payload.get("documentUrl"));
-            
+
             if (aiResult.isValid && aiResult.confidence > 0.9) {
                 // Auto Approve
                 req.setStatus("APPROVED");
                 req.setAdminNote("AUTO-APPROVED BY AI SYSTEM. Confidence: " + (aiResult.confidence * 100) + "%");
-                
+
                 // Update User immediately
                 user.setVerified(true);
                 userDao.save(user);
+            } else if (!aiResult.isValid) {
+                // Auto Reject if AI says Invalid / Error
+                req.setStatus("REJECTED");
+                req.setAdminNote("AI REJECTED: " + aiResult.message);
             } else {
-                // Flag for manual review
+                // Flag for manual review (Valid but low confidence)
                 req.setStatus("PENDING");
-                req.setAdminNote("AI Analysis: " + aiResult.message + " (" + (aiResult.confidence * 100) + "%)");
+                req.setAdminNote("AI Analysis (Low Confidence): " + aiResult.message + " ("
+                        + (aiResult.confidence * 100) + "%)");
             }
         } else {
-             req.setStatus("PENDING");
+            req.setStatus("PENDING");
         }
-        
+
         verificationDao.save(req);
         return ResponseEntity.ok(req);
     }
-    
+
     @GetMapping("/my-status")
     public ResponseEntity<?> getMyStatus() {
         User user = getCurrentUser();
-        if (user == null) return ResponseEntity.status(401).body("Unauthorized");
-        
+        if (user == null)
+            return ResponseEntity.status(401).body("Unauthorized");
+
         List<VerificationRequest> requests = verificationDao.findByUser(user);
         return ResponseEntity.ok(requests);
     }
@@ -109,7 +120,8 @@ public class VerificationController {
         }
 
         VerificationRequest req = verificationDao.findById(id).orElse(null);
-        if (req == null) return ResponseEntity.notFound().build();
+        if (req == null)
+            return ResponseEntity.notFound().build();
 
         req.setStatus("APPROVED");
         verificationDao.save(req);
@@ -130,7 +142,8 @@ public class VerificationController {
         }
 
         VerificationRequest req = verificationDao.findById(id).orElse(null);
-        if (req == null) return ResponseEntity.notFound().build();
+        if (req == null)
+            return ResponseEntity.notFound().build();
 
         req.setStatus("REJECTED");
         req.setAdminNote(payload.get("note"));
@@ -138,5 +151,5 @@ public class VerificationController {
 
         return ResponseEntity.ok("Rejected");
     }
-    
+
 }

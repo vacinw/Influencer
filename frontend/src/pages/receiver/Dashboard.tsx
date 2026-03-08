@@ -134,8 +134,8 @@ const ReceiverDashboard = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Receiver Dashboard</h1>
-                    <p className="text-sm text-gray-500">Find jobs and monitor your earnings</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Bảng Điều Khiển Influencer</h1>
+                    <p className="text-sm text-gray-500">Tìm kiếm công việc và theo dõi thu nhập của bạn</p>
                 </div>
             </div>
 
@@ -146,19 +146,19 @@ const ReceiverDashboard = () => {
                         onClick={() => setActiveTab('find')}
                         className={`${activeTab === 'find' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                     >
-                        Find Campaigns
+                        Khám Phá Chiến Dịch
                     </button>
                     <button
                         onClick={() => setActiveTab('applications')}
                         className={`${activeTab === 'applications' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                     >
-                        My Applications
+                        Hồ Sơ Của Tôi
                     </button>
                     <button
                         onClick={() => setActiveTab('jobs')}
                         className={`${activeTab === 'jobs' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                     >
-                        Active Jobs
+                        Công Việc Đang Thực Hiện
                     </button>
                 </nav>
             </div>
@@ -172,8 +172,8 @@ const ReceiverDashboard = () => {
                                 <DollarSign className="h-6 w-6 text-green-600" />
                             </div>
                             <div className="ml-5">
-                                <p className="text-sm font-medium text-gray-500 truncate">Earnings</p>
-                                <p className="text-lg font-medium text-gray-900">$500.00</p>
+                                <p className="text-sm font-medium text-gray-500 truncate">Tổng Thu Nhập</p>
+                                <p className="text-lg font-medium text-gray-900">12,650,000 ₫</p>
                             </div>
                         </div>
                         <div className="bg-white overflow-hidden shadow rounded-lg p-5 flex items-center">
@@ -181,7 +181,7 @@ const ReceiverDashboard = () => {
                                 <Briefcase className="h-6 w-6 text-blue-600" />
                             </div>
                             <div className="ml-5">
-                                <p className="text-sm font-medium text-gray-500 truncate">Active Jobs</p>
+                                <p className="text-sm font-medium text-gray-500 truncate">Công Việc Đang Làm</p>
                                 <p className="text-lg font-medium text-gray-900">{myJobs.length > 0 ? myJobs.length : 4}</p>
                             </div>
                         </div>
@@ -190,13 +190,13 @@ const ReceiverDashboard = () => {
                     {/* Campaign Discovery */}
                     <div className="mt-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                            <h2 className="text-lg leading-6 font-medium text-gray-900">Explore Campaigns</h2>
+                            <h2 className="text-lg leading-6 font-medium text-gray-900">Khám Phá Chiến Dịch</h2>
                             <div className="flex gap-2">
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                                     <input
                                         type="text"
-                                        placeholder="Search campaigns..."
+                                        placeholder="Tìm kiếm chiến dịch..."
                                         value={search}
                                         onChange={(e) => setSearch(e.target.value)}
                                         className="pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500 w-full md:w-64"
@@ -205,7 +205,7 @@ const ReceiverDashboard = () => {
                                 <div className="w-full md:w-48">
                                     <CustomSelect
                                         options={[
-                                            { value: 'All', label: 'All Platforms' },
+                                            { value: 'All', label: 'Tất cả nền tảng' },
                                             { value: 'Instagram', label: 'Instagram' },
                                             { value: 'TikTok', label: 'TikTok' },
                                             { value: 'YouTube', label: 'YouTube' },
@@ -224,7 +224,7 @@ const ReceiverDashboard = () => {
                             </div>
                         ) : campaigns.length === 0 ? (
                             <div className="text-center p-12 bg-white rounded-lg border border-dashed border-gray-300 text-gray-500">
-                                No campaigns found matching your criteria.
+                                Không tìm thấy chiến dịch nào phù hợp với tiêu chí của bạn.
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -274,14 +274,14 @@ const ReceiverDashboard = () => {
                                                         disabled
                                                         className="w-full flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 opacity-80 cursor-not-allowed"
                                                     >
-                                                        <CheckCircle size={16} className="mr-2" /> Applied
+                                                        <CheckCircle size={16} className="mr-2" /> Đã Ứng Tuyển
                                                     </button>
                                                 ) : (
                                                     <button
                                                         onClick={() => navigate(`/creator/campaigns/${campaign.id}`)}
                                                         className="w-full flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 transition-colors"
                                                     >
-                                                        View Details & Apply
+                                                        Xem Chi Tiết & Ứng Tuyển
                                                     </button>
                                                 )}
                                             </div>
@@ -297,15 +297,15 @@ const ReceiverDashboard = () => {
             {activeTab === 'applications' && (
                 <div className="mt-8">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-lg leading-6 font-medium text-gray-900">My Applications</h2>
+                        <h2 className="text-lg leading-6 font-medium text-gray-900">Hồ Sơ Của Tôi</h2>
                         <div className="w-48">
                             <CustomSelect
                                 options={[
-                                    { value: 'All', label: 'All Status' },
-                                    { value: 'PENDING', label: 'Pending' },
-                                    { value: 'ACCEPTED', label: 'Accepted' },
-                                    { value: 'REJECTED', label: 'Rejected' },
-                                    { value: 'COMPLETED', label: 'Completed' }
+                                    { value: 'All', label: 'Tất cả trạng thái' },
+                                    { value: 'PENDING', label: 'Đang Chờ' },
+                                    { value: 'ACCEPTED', label: 'Đã Chấp Nhận' },
+                                    { value: 'REJECTED', label: 'Bị Từ Chối' },
+                                    { value: 'COMPLETED', label: 'Đã Hoàn Thành' }
                                 ]}
                                 value={appsStatusFilter}
                                 onChange={setAppsStatusFilter}
@@ -319,7 +319,7 @@ const ReceiverDashboard = () => {
                         </div>
                     ) : myApplications.length === 0 ? (
                         <div className="text-center p-12 bg-white rounded-lg border border-dashed border-gray-300 text-gray-500">
-                            {appsStatusFilter === 'All' ? "You haven't applied to any campaigns yet." : "No applications found with this status."}
+                            {appsStatusFilter === 'All' ? "Bạn chưa ứng tuyển chiến dịch nào." : "Không có ứng tuyển nào với trạng thái này."}
                         </div>
                     ) : (
                         <>
@@ -341,7 +341,7 @@ const ReceiverDashboard = () => {
                                                             <p className="text-sm font-medium text-indigo-600 truncate">{app.campaign?.title}</p>
                                                             <div className="flex items-center text-sm text-gray-500 mt-1">
                                                                 <Clock className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                                                                <span>Applied on {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'N/A'}</span>
+                                                                <span>Đã ứng tuyển vào {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'N/A'}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -351,11 +351,14 @@ const ReceiverDashboard = () => {
                                                                 app.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
                                                                     'bg-yellow-100 text-yellow-800'
                                                             }`}>
-                                                            {app.status}
+                                                            {app.status === 'PENDING' ? 'Đang Chờ' :
+                                                                app.status === 'ACCEPTED' ? 'Đã Chấp Nhận' :
+                                                                    app.status === 'REJECTED' ? 'Bị Từ Chối' :
+                                                                        app.status === 'COMPLETED' ? 'Đã Hoàn Thành' : app.status}
                                                         </span>
                                                         {app.bidAmount && (
                                                             <span className="text-sm text-gray-500 mt-1 font-medium">
-                                                                Bid: ${app.bidAmount}
+                                                                Báo giá: {app.bidAmount.toLocaleString()} ₫
                                                             </span>
                                                         )}
                                                     </div>
@@ -365,9 +368,9 @@ const ReceiverDashboard = () => {
                                                         app.status === 'COMPLETED' ? 'bg-blue-50 text-blue-700' :
                                                             'bg-red-50 text-red-700'
                                                         }`}>
-                                                        {app.status === 'ACCEPTED' && 'Congratulations! The creator has accepted your application.'}
-                                                        {app.status === 'COMPLETED' && 'Job completed successfully!'}
-                                                        {app.status === 'REJECTED' && 'Thank you for your interest. Unfortunately, the creator moved forward with other candidates.'}
+                                                        {app.status === 'ACCEPTED' && 'Chúc mừng! Người tạo đã chấp nhận ứng tuyển của bạn.'}
+                                                        {app.status === 'COMPLETED' && 'Công việc đã hoàn thành thành công!'}
+                                                        {app.status === 'REJECTED' && 'Cảm ơn bạn đã quan tâm. Rất tiếc, người tạo đã chuyển sang các ứng viên khác.'}
                                                     </div>
                                                 )}
                                             </div>
@@ -384,17 +387,17 @@ const ReceiverDashboard = () => {
                                         disabled={appsPage === 0}
                                         className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                                     >
-                                        Previous
+                                        Trước
                                     </button>
                                     <span className="text-sm text-gray-500">
-                                        Page {appsPage + 1} of {appsTotalPages}
+                                        Trang {appsPage + 1} / {appsTotalPages}
                                     </span>
                                     <button
                                         onClick={() => setAppsPage(p => Math.min(appsTotalPages - 1, p + 1))}
                                         disabled={appsPage === appsTotalPages - 1}
                                         className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                                     >
-                                        Next
+                                        Sau
                                     </button>
                                 </div>
                             )}
@@ -402,26 +405,16 @@ const ReceiverDashboard = () => {
                     )}
                 </div>
             )}
-
-
-
-    // ...
-
-
-
-            return (
-            // ... (previous tabs)
-
             {activeTab === 'jobs' && (
                 <div className="mt-8">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                        <h2 className="text-lg leading-6 font-medium text-gray-900">Active Jobs & Deliverables</h2>
+                        <h2 className="text-lg leading-6 font-medium text-gray-900">Công Việc & Bàn Giao Đang Diễn Ra</h2>
                         <div className="flex gap-2">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                                 <input
                                     type="text"
-                                    placeholder="Search jobs..."
+                                    placeholder="Tìm kiếm công việc..."
                                     value={jobSearch}
                                     onChange={(e) => setJobSearch(e.target.value)}
                                     className="pl-9 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-indigo-500 focus:border-indigo-500 w-full md:w-64"
@@ -430,9 +423,9 @@ const ReceiverDashboard = () => {
                             <div className="w-40 relative">
                                 <CustomSelect
                                     options={[
-                                        { value: 'All', label: 'All Status' },
-                                        { value: 'IN_PROGRESS', label: 'In Progress' },
-                                        { value: 'COMPLETED', label: 'Completed' }
+                                        { value: 'All', label: 'Tất Cả Trạng Thái' },
+                                        { value: 'IN_PROGRESS', label: 'Đang Thực Hiện' },
+                                        { value: 'COMPLETED', label: 'Đã Hoàn Thành' }
                                     ]}
                                     value={jobStatusFilter}
                                     onChange={setJobStatusFilter}
@@ -448,8 +441,8 @@ const ReceiverDashboard = () => {
                     ) : filteredJobs.length === 0 ? (
                         <div className="text-center p-12 bg-white rounded-lg border border-dashed border-gray-300 text-gray-500">
                             {jobSearch || jobStatusFilter !== 'All'
-                                ? "No jobs found matching your filters."
-                                : "You have no active jobs. Apply to campaigns to get started!"}
+                                ? "Không tìm thấy công việc phù hợp với bộ lọc của bạn."
+                                : "Bạn không có công việc nào đang diễn ra. Hãy ứng tuyển vào các chiến dịch để bắt đầu!"}
                         </div>
                     ) : (
                         <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -471,12 +464,12 @@ const ReceiverDashboard = () => {
                                                     <div>
                                                         <h3 className="text-sm font-bold text-indigo-600 truncate">{job.campaign.title}</h3>
                                                         <div className="flex flex-col sm:flex-row sm:items-center text-sm text-gray-500 mt-1 gap-2">
-                                                            <span className="flex items-center"><Clock size={14} className="mr-1" /> Started {new Date(job.createdAt).toLocaleDateString()}</span>
+                                                            <span className="flex items-center"><Clock size={14} className="mr-1" /> Đã bắt đầu {new Date(job.createdAt).toLocaleDateString()}</span>
                                                             <span className="hidden sm:inline">•</span>
                                                             {job.price ? (
-                                                                <span className="font-medium text-gray-900">${job.price.toLocaleString()}</span>
+                                                                <span className="font-medium text-gray-900">{job.price.toLocaleString()} ₫</span>
                                                             ) : (
-                                                                <span className="text-gray-400 italic">Price not set</span>
+                                                                <span className="text-gray-400 italic">Chưa thiết lập giá</span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -486,13 +479,15 @@ const ReceiverDashboard = () => {
                                                         job.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
                                                             'bg-gray-100 text-gray-800'
                                                         }`}>
-                                                        {job.status.replace('_', ' ')}
+                                                        {job.status === 'COMPLETED' ? 'Đã Hoàn Thành' :
+                                                            job.status === 'IN_PROGRESS' ? 'Đang Thực Hiện' :
+                                                                job.status.replace('_', ' ')}
                                                     </span>
                                                     <button
                                                         onClick={() => navigate(`/job/${job.id}`)}
                                                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none transition-colors shadow-sm"
                                                     >
-                                                        Open Workspace
+                                                        Mở Không Gian Việc
                                                     </button>
                                                 </div>
                                             </div>

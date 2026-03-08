@@ -1,4 +1,6 @@
-import { Calendar, Monitor, Hash, Clock, Share2, MessageCircle, Heart, User } from 'lucide-react';
+import { Calendar, Clock, Share2, MessageCircle, Heart, User } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface CampaignData {
     title: string;
@@ -33,8 +35,10 @@ export const ClassicLayout = ({ data }: { data: CampaignData }) => (
                     ))}
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">{data.title}</h1>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line mb-6">{data.description}</p>
-                
+                <div className="prose prose-sm md:prose-base text-gray-600 max-w-none leading-relaxed mb-6">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.description}</ReactMarkdown>
+                </div>
+
                 {data.videos.length > 0 && (
                     <div className="mb-6">
                         <h3 className="font-semibold text-gray-900 mb-2">Promo Video</h3>
@@ -48,17 +52,17 @@ export const ClassicLayout = ({ data }: { data: CampaignData }) => (
                     ))}
                 </div>
             </div>
-            
+
             <div className="md:w-1/3 bg-gray-50 p-8 border-l border-gray-200">
                 <div className="space-y-6">
                     {data.images.length > 0 && (
                         <img src={data.images[0]} alt="Main" className="w-full aspect-square object-cover rounded-lg shadow-sm mb-4" />
                     )}
-                    
+
                     <div>
                         <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Deadline</h3>
                         <div className="flex items-center text-gray-900">
-                            <Calendar size={18} className="mr-2 text-indigo-600"/>
+                            <Calendar size={18} className="mr-2 text-indigo-600" />
                             <span className="font-semibold">{data.deadline ? new Date(data.deadline).toLocaleDateString() : 'No date set'}</span>
                         </div>
                     </div>
@@ -66,9 +70,9 @@ export const ClassicLayout = ({ data }: { data: CampaignData }) => (
                     <div>
                         <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Gallery</h3>
                         <div className="grid grid-cols-3 gap-2">
-                             {data.images.slice(1, 7).map((img, idx) => (
-                                 <img key={idx} src={img} className="w-full aspect-square object-cover rounded-md border border-gray-200" />
-                             ))}
+                            {data.images.slice(1, 7).map((img, idx) => (
+                                <img key={idx} src={img} className="w-full aspect-square object-cover rounded-md border border-gray-200" />
+                            ))}
                         </div>
                     </div>
 
@@ -88,7 +92,7 @@ export const ShowcaseLayout = ({ data }: { data: CampaignData }) => (
         {/* Full Hero */}
         <div className="relative h-[60vh] w-full overflow-hidden">
             {data.images[0] ? (
-                 <img src={data.images[0]} className="w-full h-full object-cover opacity-60" />
+                <img src={data.images[0]} className="w-full h-full object-cover opacity-60" />
             ) : (
                 <div className="w-full h-full bg-gray-900 flex items-center justify-center">
                     <span className="text-gray-700 font-bold text-4xl">NO IMAGE</span>
@@ -99,13 +103,13 @@ export const ShowcaseLayout = ({ data }: { data: CampaignData }) => (
                 <div className="max-w-4xl mx-auto">
                     <div className="flex gap-2 mb-4">
                         {data.platforms.map(p => (
-                             <span key={p} className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-sm font-medium border border-white/30">{p}</span>
+                            <span key={p} className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-sm font-medium border border-white/30">{p}</span>
                         ))}
                     </div>
                     <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4">{data.title}</h1>
                     <div className="flex items-center text-gray-300 gap-4">
-                        <span className="flex items-center"><Clock size={18} className="mr-1"/> Ends {data.deadline ? new Date(data.deadline).toLocaleDateString() : 'N/A'}</span>
-                        <span className="flex items-center"><User size={18} className="mr-1"/> by {data.creator?.name || 'Creator'}</span>
+                        <span className="flex items-center"><Clock size={18} className="mr-1" /> Ends {data.deadline ? new Date(data.deadline).toLocaleDateString() : 'N/A'}</span>
+                        <span className="flex items-center"><User size={18} className="mr-1" /> by {data.creator?.name || 'Creator'}</span>
                     </div>
                 </div>
             </div>
@@ -113,7 +117,9 @@ export const ShowcaseLayout = ({ data }: { data: CampaignData }) => (
 
         <div className="max-w-4xl mx-auto px-6 md:px-0 -mt-10 relative z-10">
             <div className="bg-gray-900/80 backdrop-blur-xl border border-white/10 p-8 rounded-2xl mb-12">
-                <p className="text-xl leading-relaxed text-gray-300">{data.description}</p>
+                <div className="prose prose-lg text-gray-300 prose-invert max-w-none leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.description}</ReactMarkdown>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -124,13 +130,13 @@ export const ShowcaseLayout = ({ data }: { data: CampaignData }) => (
                 ))}
                 {data.images.slice(1).map((img, i) => (
                     <div key={i} className="aspect-square bg-gray-800 rounded-xl overflow-hidden border border-white/10">
-                         <img src={img} className="w-full h-full object-cover transition-transform hover:scale-105 duration-500" />
+                        <img src={img} className="w-full h-full object-cover transition-transform hover:scale-105 duration-500" />
                     </div>
                 ))}
             </div>
-            
+
             <div className="text-center">
-                 <button className="bg-white text-black px-12 py-4 rounded-full text-xl font-bold hover:bg-gray-200 transition-colors">
+                <button className="bg-white text-black px-12 py-4 rounded-full text-xl font-bold hover:bg-gray-200 transition-colors">
                     Join Campaign
                 </button>
             </div>
@@ -145,30 +151,30 @@ export const SocialLayout = ({ data }: { data: CampaignData }) => (
             <h2 className="text-sm font-bold opacity-80 uppercase tracking-widest">Influencer Opportunity</h2>
             <h1 className="text-3xl font-extrabold mt-2">{data.title}</h1>
         </div>
-        
+
         <div className="p-6">
             <div className="flex items-center justify-center space-x-6 mb-8 border-b border-gray-100 pb-6">
-                 {data.platforms.map(p => (
+                {data.platforms.map(p => (
                     <div key={p} className="flex flex-col items-center">
                         <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-2xl">
                             {p[0]}
                         </div>
                         <span className="text-xs font-medium mt-1 text-gray-600">{p}</span>
                     </div>
-                 ))}
+                ))}
             </div>
 
-            <div className="prose prose-sm mx-auto text-center text-gray-600 mb-8">
-                 {data.description}
+            <div className="prose prose-sm mx-auto text-left text-gray-600 mb-8 max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.description}</ReactMarkdown>
             </div>
 
             <div className="aspect-[4/5] bg-gray-100 rounded-xl overflow-hidden mb-6 relative">
-                 {data.images[0] && <img src={data.images[0]} className="w-full h-full object-cover" />}
-                 <div className="absolute bottom-4 right-4 flex gap-2">
-                    <button className="bg-white/90 p-2 rounded-full shadow text-pink-500"><Heart size={20} fill="currentColor"/></button>
-                    <button className="bg-white/90 p-2 rounded-full shadow text-blue-500"><MessageCircle size={20}/></button>
-                    <button className="bg-white/90 p-2 rounded-full shadow text-black"><Share2 size={20}/></button>
-                 </div>
+                {data.images[0] && <img src={data.images[0]} className="w-full h-full object-cover" />}
+                <div className="absolute bottom-4 right-4 flex gap-2">
+                    <button className="bg-white/90 p-2 rounded-full shadow text-pink-500"><Heart size={20} fill="currentColor" /></button>
+                    <button className="bg-white/90 p-2 rounded-full shadow text-blue-500"><MessageCircle size={20} /></button>
+                    <button className="bg-white/90 p-2 rounded-full shadow text-black"><Share2 size={20} /></button>
+                </div>
             </div>
 
             <div className="flex flex-wrap gap-2 justify-center mb-8">
@@ -211,15 +217,17 @@ export const MinimalLayout = ({ data }: { data: CampaignData }) => (
                     </div>
                 </div>
             </div>
-            
+
             <div className="col-span-8">
-                 <p className="text-xl font-serif leading-relaxed text-gray-800 mb-8">{data.description}</p>
-                 
-                 <div className="grid grid-cols-2 gap-4">
-                     {data.images.map((img, i) => (
-                         <img key={i} src={img} className="w-full grayscale hover:grayscale-0 transition-all duration-500" />
-                     ))}
-                 </div>
+                <div className="prose prose-lg xl:prose-xl font-serif leading-relaxed text-gray-800 mb-8 max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.description}</ReactMarkdown>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    {data.images.map((img, i) => (
+                        <img key={i} src={img} className="w-full grayscale hover:grayscale-0 transition-all duration-500" />
+                    ))}
+                </div>
             </div>
         </div>
     </div>

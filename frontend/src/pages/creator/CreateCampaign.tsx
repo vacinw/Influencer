@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import { ChevronLeft, Upload, Calendar, Hash, Monitor, X, Image as ImageIcon, Video, Loader2, Layout, CheckCircle, Eye, Edit2 } from 'lucide-react';
 import { ClassicLayout, ShowcaseLayout, SocialLayout, MinimalLayout } from '../../components/layouts/CampaignLayouts';
 import { useAuth } from '../../context/AuthContext';
+import SimpleMdeReact from 'react-simplemde-editor';
+import 'easymde/dist/easymde.min.css';
 
 const CreateCampaign = () => {
     const { id } = useParams(); // Get campaign ID if in edit mode
@@ -15,21 +17,25 @@ const CreateCampaign = () => {
         images: [] as string[],
         videos: [] as string[],
         deadline: '',
-        tags: '',
+        tags: [] as string[],
         platforms: [] as string[],
         layoutStyle: 'CLASSIC', // Default
         status: 'Đang tuyển'
     });
     const [loading, setLoading] = useState(false);
-    const [fetching, setFetching] = useState(false); // For initial data fetch
+    // const [fetching, setFetching] = useState(false); // For initial data fetch
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [isPreview, setIsPreview] = useState(false);
+    const [categories, setCategories] = useState<{ id: number, name: string }[]>([]);
+
+    useEffect(() => {
+        api.get('/categories').then(res => setCategories(res.data)).catch(console.error);
+    }, []);
 
     // Fetch existing campaign if editing
     useEffect(() => {
         if (id) {
-            setFetching(true);
             api.get(`/campaign/${id}`)
                 .then(response => {
                     const data = response.data;
@@ -39,7 +45,7 @@ const CreateCampaign = () => {
                         images: data.images || [],
                         videos: data.videos || [],
                         deadline: data.deadline ? data.deadline.split('T')[0] : '',
-                        tags: Array.isArray(data.tags) ? data.tags.join(', ') : (data.tags || ''),
+                        tags: Array.isArray(data.tags) ? data.tags : (data.tags ? data.tags.split(',').map((t: string) => t.trim()) : []),
                         platforms: data.platforms || [],
                         layoutStyle: data.layoutStyle || 'CLASSIC',
                         status: data.status || 'Đang tuyển'
@@ -48,8 +54,7 @@ const CreateCampaign = () => {
                 .catch(err => {
                     console.error("Failed to fetch campaign details", err);
                     setError("Failed to load campaign data.");
-                })
-                .finally(() => setFetching(false));
+                });
         }
     }, [id]);
 
@@ -57,10 +62,10 @@ const CreateCampaign = () => {
     const videoInputRef = useRef<HTMLInputElement>(null);
 
     const layouts = [
-        { id: 'CLASSIC', name: 'Classic Standard', description: 'Traditional split view. Best for detailed text descriptions with a side gallery of 1-6 images.', color: 'bg-gray-100' },
-        { id: 'SHOWCASE', name: 'Visual Showcase', description: 'Immersive experience. Features a full-screen hero banner and wide masonry grid. Perfect for high-quality visuals.', color: 'bg-indigo-50' },
-        { id: 'SOCIAL', name: 'Social First', description: 'Mobile-app style. Highlights platforms (TikTok, IG) and engagement metrics. Great for influencer-focused briefs.', color: 'bg-pink-50' },
-        { id: 'MINIMAL', name: 'Minimalist', description: 'Clean and editorial. Focuses purely on typography and the "Apply" action. Images are subtle grayscale until hovered.', color: 'bg-white border' }
+        { id: 'CLASSIC', name: 'Tiêu chuẩn', description: 'Giao diện truyền thống chia đôi. Tốt nhất cho các mô tả văn bản chi tiết với một bộ sưu tập ảnh bên cạnh.', color: 'bg-gray-100' },
+        { id: 'SHOWCASE', name: 'Trưng bày hình ảnh', description: 'Trải nghiệm đắm chìm. Tính năng banner ảnh toàn màn hình và lưới ảnh rộng. Hoàn hảo cho hình ảnh chất lượng cao.', color: 'bg-indigo-50' },
+        { id: 'SOCIAL', name: 'Ưu tiên mạng xã hội', description: 'Phong cách ứng dụng di động. Làm nổi bật các nền tảng (TikTok, IG). Tuyệt vời cho các chiến dịch tập trung vào influencer.', color: 'bg-pink-50' },
+        { id: 'MINIMAL', name: 'Tối giản', description: 'Gọn gàng và mang tính xã luận. Chỉ tập trung vào typography và nút "Ứng tuyển". Hình ảnh hiển thị thang độ xám một cách tinh tế cho đến khi di chuột.', color: 'bg-white border' }
     ];
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -121,21 +126,38 @@ const CreateCampaign = () => {
         }));
     };
 
+    const handleDescriptionChange = useCallback((value: string) => {
+        setFormData(prev => ({ ...prev, description: value }));
+    }, []);
+
+    const mdeOptions = useMemo(() => {
+        return {
+            placeholder: "Mô tả về thương hiệu của bạn, mục tiêu chiến dịch và những gì bạn mong đợi từ influencer... (Hỗ trợ Markdown)",
+            spellChecker: false,
+            status: false,
+            minHeight: "150px",
+            toolbar: [
+                "bold", "italic", "heading", "|",
+                "quote", "unordered-list", "ordered-list", "|",
+                "link", "image", "|",
+                "preview", "guide"
+            ]
+        } as any;
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
 
         try {
-            const tagsArray = formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-            
             const payload = {
                 title: formData.title,
                 description: formData.description,
                 images: formData.images,
                 videos: formData.videos,
                 deadline: formData.deadline,
-                tags: tagsArray,
+                tags: formData.tags,
                 platforms: formData.platforms,
                 layoutStyle: formData.layoutStyle,
                 status: formData.status
@@ -159,8 +181,8 @@ const CreateCampaign = () => {
 
     // Helper to render current layout preview
     const renderPreview = () => {
-        const previewData = { ...formData, tags: formData.tags.split(','), creator: { name: user?.name || 'You', email: user?.email || 'email@example.com' } };
-        switch(formData.layoutStyle) {
+        const previewData = { ...formData, creator: { name: user?.name || 'You', email: user?.email || 'email@example.com' } };
+        switch (formData.layoutStyle) {
             case 'SHOWCASE': return <ShowcaseLayout data={previewData} />;
             case 'SOCIAL': return <SocialLayout data={previewData} />;
             case 'MINIMAL': return <MinimalLayout data={previewData} />;
@@ -171,24 +193,24 @@ const CreateCampaign = () => {
     if (isPreview) {
         return (
             <div className="bg-gray-100 min-h-screen pb-20">
-                 <div className="sticky top-0 z-50 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
+                <div className="sticky top-0 z-50 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shadow-sm">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
-                        <Eye size={20} className="text-indigo-600"/> Live Preview: <span className="text-indigo-600">{layouts.find(l => l.id === formData.layoutStyle)?.name}</span>
+                        <Eye size={20} className="text-indigo-600" /> Xem Trước Trực Tiếp: <span className="text-indigo-600">{layouts.find(l => l.id === formData.layoutStyle)?.name}</span>
                     </h2>
                     <div className="flex gap-3">
-                         <button 
+                        <button
                             onClick={() => setIsPreview(false)}
                             className="flex items-center gap-2 px-4 py-2 border border-black rounded-lg hover:bg-gray-50 transition-colors"
                         >
-                            <Edit2 size={16}/> Continue Editing
+                            <Edit2 size={16} /> Tiếp Tục Chỉnh Sửa
                         </button>
-                        <button 
+                        <button
                             onClick={handleSubmit}
                             disabled={loading}
                             className="flex items-center gap-2 px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors shadow-lg"
                         >
-                             {loading ? <Loader2 className="animate-spin" size={16}/> : <Upload size={16}/>}
-                             Publish Now
+                            {loading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                            Xuất Bản Ngay
                         </button>
                     </div>
                 </div>
@@ -200,26 +222,26 @@ const CreateCampaign = () => {
     return (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex justify-between items-center mb-6">
-                <button 
-                    onClick={() => navigate(-1)} 
+                <button
+                    onClick={() => navigate(-1)}
                     className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
                 >
                     <ChevronLeft size={20} />
-                    <span className="ml-1">Back</span>
+                    <span className="ml-1">Quay lại</span>
                 </button>
-                <button 
+                <button
                     onClick={() => setIsPreview(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 font-medium rounded-lg hover:bg-indigo-100 transition-colors"
                 >
-                    <Eye size={18}/> Preview Layout
+                    <Eye size={18} /> Xem Trước Giao Diện
                 </button>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900">{id ? 'Edit Campaign' : 'Create New Campaign'}</h1>
-                        <p className="text-gray-500 text-sm mt-1">Design a visually stunning campaign to attract top influencers.</p>
+                        <h1 className="text-xl font-bold text-gray-900">{id ? 'Chỉnh Sửa Chiến Dịch' : 'Tạo Chiến Dịch Mới'}</h1>
+                        <p className="text-gray-500 text-sm mt-1">Thiết kế một chiến dịch đẹp mắt để thu hút các influencer hàng đầu.</p>
                     </div>
                 </div>
 
@@ -234,22 +256,21 @@ const CreateCampaign = () => {
                     {/* Section 0: Layout Selection */}
                     <div className="space-y-4">
                         <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                             <Layout size={20} /> Select Layout Style
+                            <Layout size={20} /> Chọn Kiểu Giao Diện
                         </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             {layouts.map(layout => (
-                                <div 
+                                <div
                                     key={layout.id}
                                     onClick={() => setFormData({ ...formData, layoutStyle: layout.id })}
-                                    className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all ${
-                                        formData.layoutStyle === layout.id 
-                                            ? 'border-black bg-gray-50 ring-1 ring-black' 
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                    className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all ${formData.layoutStyle === layout.id
+                                        ? 'border-black bg-gray-50 ring-1 ring-black'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                        }`}
                                 >
                                     {formData.layoutStyle === layout.id && (
                                         <div className="absolute top-2 right-2 text-black">
-                                            <CheckCircle size={18} fill="black" className="text-white"/>
+                                            <CheckCircle size={18} fill="black" className="text-white" />
                                         </div>
                                     )}
                                     <div className={`h-20 w-full rounded-md mb-3 ${layout.color}`}></div>
@@ -261,10 +282,10 @@ const CreateCampaign = () => {
                     </div>
 
                     <div className="border-t border-gray-100 pt-8 space-y-6">
-                        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Details</h2>
-                        
+                        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Chi Tiết Cơ Bản</h2>
+
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Title</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Tiêu Đề Chiến Dịch</label>
                             <input
                                 type="text"
                                 name="title"
@@ -272,34 +293,32 @@ const CreateCampaign = () => {
                                 value={formData.title}
                                 onChange={handleInputChange}
                                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition-all text-lg placeholder-gray-400"
-                                placeholder="e.g. Summer Glow Skincare Launch"
+                                placeholder="VD: Ra mắt bộ chăm sóc da mùa hè"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                            <textarea
-                                name="description"
-                                required
-                                rows={5}
-                                value={formData.description}
-                                onChange={handleInputChange}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition-all resize-none text-base placeholder-gray-400"
-                                placeholder="Describe your brand, the campaign goals, and what you expect from influencers..."
-                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Mô tả</label>
+                            <div className="prose-sm sm:prose-base">
+                                <SimpleMdeReact
+                                    value={formData.description}
+                                    onChange={handleDescriptionChange}
+                                    options={mdeOptions}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Section 2: Media Gallery */}
                     <div className="space-y-6">
                         <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 flex justify-between items-center">
-                            <span>Media Gallery</span>
-                            {uploading && <span className="text-sm font-normal text-indigo-600 flex items-center"><Loader2 className="animate-spin mr-1" size={16}/> Uploading...</span>}
+                            <span>Thư Viện Phương Tiện</span>
+                            {uploading && <span className="text-sm font-normal text-indigo-600 flex items-center"><Loader2 className="animate-spin mr-1" size={16} /> Đang tải lên...</span>}
                         </h2>
-                        
+
                         {/* Images Upload */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Campaign Images</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Hình Ảnh Chiến Dịch</label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                                 {formData.images.map((url, idx) => (
                                     <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-gray-50">
@@ -313,28 +332,28 @@ const CreateCampaign = () => {
                                         </button>
                                     </div>
                                 ))}
-                                <div 
+                                <div
                                     onClick={() => imageInputRef.current?.click()}
                                     className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-indigo-500 hover:bg-indigo-50 transition-all cursor-pointer flex flex-col items-center justify-center text-gray-400 hover:text-indigo-600"
                                 >
                                     <ImageIcon size={32} strokeWidth={1.5} />
-                                    <span className="text-xs mt-2 font-medium">Add Images</span>
+                                    <span className="text-xs mt-2 font-medium">Thêm Ảnh</span>
                                 </div>
                             </div>
-                            <input 
-                                type="file" 
-                                ref={imageInputRef} 
-                                className="hidden" 
-                                accept="image/*" 
-                                multiple 
-                                onChange={(e) => handleFileUpload(e.target.files, 'image')} 
+                            <input
+                                type="file"
+                                ref={imageInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => handleFileUpload(e.target.files, 'image')}
                             />
-                            <p className="text-xs text-gray-500">Supported formats: JPG, PNG, WEBP. Max 5MB per file.</p>
+                            <p className="text-xs text-gray-500">Định dạng hỗ trợ: JPG, PNG, WEBP. Tối đa 5MB mỗi tệp.</p>
                         </div>
 
                         {/* Video Upload */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Promotional Video (Optional)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Video Quảng Cáo (Không Bắt Buộc)</label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                                 {formData.videos.map((url, idx) => (
                                     <div key={idx} className="relative group aspect-video rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-black">
@@ -349,33 +368,33 @@ const CreateCampaign = () => {
                                     </div>
                                 ))}
                                 {formData.videos.length === 0 && (
-                                    <div 
+                                    <div
                                         onClick={() => videoInputRef.current?.click()}
                                         className="aspect-video rounded-lg border-2 border-dashed border-gray-300 hover:border-indigo-500 hover:bg-indigo-50 transition-all cursor-pointer flex flex-col items-center justify-center text-gray-400 hover:text-indigo-600"
                                     >
                                         <Video size={32} strokeWidth={1.5} />
-                                        <span className="text-xs mt-2 font-medium">Add Video</span>
+                                        <span className="text-xs mt-2 font-medium">Thêm Video</span>
                                     </div>
                                 )}
                             </div>
-                             <input 
-                                type="file" 
-                                ref={videoInputRef} 
-                                className="hidden" 
-                                accept="video/*" 
-                                onChange={(e) => handleFileUpload(e.target.files, 'video')} 
+                            <input
+                                type="file"
+                                ref={videoInputRef}
+                                className="hidden"
+                                accept="video/*"
+                                onChange={(e) => handleFileUpload(e.target.files, 'video')}
                             />
-                             <p className="text-xs text-gray-500">Supported formats: MP4, MOV. Max 50MB.</p>
+                            <p className="text-xs text-gray-500">Định dạng hỗ trợ: MP4, MOV. Tối đa 50MB.</p>
                         </div>
                     </div>
 
                     {/* Section 3: Targeting & Logistics */}
                     <div className="space-y-6">
-                         <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Targeting & Logistics</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Mục Tiêu & Hậu Cần</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <span className="flex items-center gap-2"><Calendar size={18} className="text-gray-400"/> Application Deadline</span>
+                                    <span className="flex items-center gap-2"><Calendar size={18} className="text-gray-400" /> Hạn Chót Ứng Tuyển</span>
                                 </label>
                                 <input
                                     type="date"
@@ -388,22 +407,37 @@ const CreateCampaign = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    <span className="flex items-center gap-2"><Hash size={18} className="text-gray-400"/> Tags / Keywords</span>
+                                    <span className="flex items-center gap-2"><Hash size={18} className="text-gray-400" /> Danh Mục / Thẻ</span>
                                 </label>
-                                <input
-                                    type="text"
-                                    name="tags"
-                                    value={formData.tags}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-black focus:border-black outline-none transition-all"
-                                    placeholder="fashion, lifestyle, summer..."
-                                />
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.map(cat => {
+                                        const isSelected = formData.tags.includes(cat.name);
+                                        return (
+                                            <button
+                                                key={cat.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        tags: isSelected
+                                                            ? prev.tags.filter(t => t !== cat.name)
+                                                            : [...prev.tags, cat.name]
+                                                    }));
+                                                }}
+                                                className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                                            >
+                                                {cat.name}
+                                            </button>
+                                        );
+                                    })}
+                                    {categories.length === 0 && <span className="text-sm text-gray-500 italic">Chưa có danh mục nào (Tạo tại mục Explore)</span>}
+                                </div>
                             </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-3">
-                                <span className="flex items-center gap-2"><Monitor size={18} className="text-gray-400"/> Required Platforms</span>
+                                <span className="flex items-center gap-2"><Monitor size={18} className="text-gray-400" /> Nền Tảng Yêu Cầu</span>
                             </label>
                             <div className="flex flex-wrap gap-3">
                                 {['Facebook', 'Instagram', 'TikTok', 'YouTube', 'Twitter'].map(platform => (
@@ -411,11 +445,10 @@ const CreateCampaign = () => {
                                         key={platform}
                                         type="button"
                                         onClick={() => handlePlatformChange(platform)}
-                                        className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-all ${
-                                            formData.platforms.includes(platform)
-                                                ? 'bg-black text-white border-black shadow-md transform -translate-y-0.5'
-                                                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-                                        }`}
+                                        className={`px-5 py-2.5 rounded-full text-sm font-medium border transition-all ${formData.platforms.includes(platform)
+                                            ? 'bg-black text-white border-black shadow-md transform -translate-y-0.5'
+                                            : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                            }`}
                                     >
                                         {platform}
                                     </button>
@@ -431,15 +464,15 @@ const CreateCampaign = () => {
                             onClick={() => navigate(-1)}
                             className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                         >
-                            Cancel
+                            Hủy
                         </button>
                         <button
                             type="submit"
                             disabled={loading || uploading}
                             className="px-8 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                            {loading ? <Loader2 className="animate-spin" size={20}/> : <Upload size={20}/>}
-                            {loading ? (id ? 'Updating...' : 'Creating Campaign...') : (id ? 'Update Campaign' : 'Publish Campaign')}
+                            {loading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
+                            {loading ? (id ? 'Đang cập nhật...' : 'Đang tạo chiến dịch...') : (id ? 'Cập Nhật Chiến Dịch' : 'Đăng Chiến Dịch')}
                         </button>
                     </div>
                 </form>

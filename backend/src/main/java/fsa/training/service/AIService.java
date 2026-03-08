@@ -37,7 +37,7 @@ public class AIService {
         if (apiKey == null || apiKey.isEmpty() || "YOUR_FPT_API_KEY".equals(apiKey)) {
             System.out.println("No FPT.AI API Key found. Using MOCK mode.");
             if (documentUrl != null && documentUrl.toLowerCase().contains("invalid")) {
-                 return new AIResult(false, 0.45f, "Phát hiện dấu hiệu chỉnh sửa (Mock)");
+                return new AIResult(false, 0.45f, "Phát hiện dấu hiệu chỉnh sửa (Mock)");
             }
             return new AIResult(true, 0.98f, "Hợp lệ (Mock Verified)");
         }
@@ -45,7 +45,7 @@ public class AIService {
         // 2. Real API Call to FPT.AI
         try {
             String apiUrl = "https://api.fpt.ai/vision/idr/vnm";
-            
+
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.set("api_key", apiKey);
@@ -63,18 +63,29 @@ public class AIService {
                 List<Map<String, Object>> dataList = (List<Map<String, Object>>) respBody.get("data");
                 if (dataList != null && !dataList.isEmpty()) {
                     // Start with high confidence, verify specific fields if needed
-                    // For simplicity, if FPT returns data (errorCode=0), we consider it a valid card structure.
+                    // For simplicity, if FPT returns data (errorCode=0), we consider it a valid
+                    // card structure.
                     // You can parse "id", "name" fields to match with User data for stricter check.
-                    
+
                     return new AIResult(true, 0.95f, "Đã xác thực bởi FPT.AI");
                 }
             }
-            
-            return new AIResult(false, 0.0f, "Không nhận diện được CMND/CCCD (FPT Error: " + respBody.get("errorMessage") + ")");
 
+            return new AIResult(false, 0.0f,
+                    "Không nhận diện được CMND/CCCD (FPT Error: " + respBody.get("errorMessage") + ")");
+
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // Handle 4xx errors from FPT AI (e.g., 400 Bad Request)
+            String responseBody = e.getResponseBodyAsString();
+            if (responseBody.contains("Unable to find ID card")) {
+                return new AIResult(false, 0.0f, "Không tìm thấy CMND/CCCD trong ảnh. Vui lòng chụp rõ ràng.");
+            } else if (responseBody.contains("image_url")) {
+                return new AIResult(false, 0.0f, "Đường dẫn ảnh không hợp lệ hoặc không tải được.");
+            }
+            return new AIResult(false, 0.0f, "Ảnh không hợp lệ hoặc chất lượng kém. Vui lòng thử lại.");
         } catch (Exception e) {
             e.printStackTrace();
-            return new AIResult(false, 0.0f, "Lỗi gọi AI Service: " + e.getMessage());
+            return new AIResult(false, 0.0f, "Lỗi hệ thống khi xác thực. Vui lòng thử lại sau.");
         }
     }
 }

@@ -114,6 +114,9 @@ public class ReceiverController {
         return ResponseEntity.ok(response);
     }
 
+    @Autowired
+    private fsa.training.dao.NotificationDao notificationDao;
+
     @PostMapping("/apply-campaign")
     public ResponseEntity<?> applyCampaign(@RequestParam Long campaignId,
             @RequestParam(required = false) String message) {
@@ -148,6 +151,18 @@ public class ReceiverController {
 
         try {
             campaignApplicationDao.save(application);
+
+            // Create notification for creator
+            if (campaign.getCreator() != null) {
+                fsa.training.entity.Notification notification = new fsa.training.entity.Notification();
+                notification.setUser(campaign.getCreator());
+                notification.setTitle("Có ứng viên mới");
+                notification.setContent("User " + currentUser.getName() + " đã ứng tuyển vào chiến dịch "
+                        + campaign.getTitle() + " của bạn.");
+                notification.setLink("/creator/campaigns/" + campaign.getId() + "/applicants");
+                notificationDao.save(notification);
+            }
+
             return ResponseEntity.ok("Ứng tuyển thành công! Trạng thái: Chờ xác nhận.");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi khi ứng tuyển: " + e.getMessage());

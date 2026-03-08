@@ -10,6 +10,8 @@ import java.util.Optional;
 @Repository
 public interface VerificationDao extends JpaRepository<VerificationRequest, Long> {
     List<VerificationRequest> findByStatus(String status);
-    Optional<VerificationRequest> findByUserAndStatus(User user, String status);
+
+    List<VerificationRequest> findByUserAndStatus(User user, String status);
+
     List<VerificationRequest> findByUser(User user);
 }

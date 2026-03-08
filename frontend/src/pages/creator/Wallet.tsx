@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, ArrowUpRight, ArrowDownLeft, Clock, CreditCard, Loader2 } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Clock, CreditCard, Loader2 } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -13,7 +13,7 @@ interface Transaction {
 }
 
 const Wallet = () => {
-    const { user } = useAuth();
+    const { } = useAuth();
     const [balance, setBalance] = useState(0);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -44,10 +44,10 @@ const Wallet = () => {
             setDepositAmount('');
             // Refresh data
             fetchWalletData();
-            alert('Deposit successful!');
+            alert('Nạp tiền thành công!');
         } catch (error) {
             console.error("Deposit failed", error);
-            alert('Deposit failed');
+            alert('Nạp tiền thất bại');
         } finally {
             setProcessing(false);
         }
@@ -63,43 +63,42 @@ const Wallet = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-            <h1 className="text-2xl font-bold text-gray-900">My Wallet</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Ví Của Tôi</h1>
 
             {/* Balance Card */}
             <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-center">
                 <div>
-                    <p className="text-gray-400 font-medium mb-1">Total Balance</p>
+                    <p className="text-gray-400 font-medium mb-1">Số Dư Tổng</p>
                     <h2 className="text-4xl font-bold flex items-center">
-                        <DollarSign className="w-8 h-8 mr-1 opacity-70" />
-                        {balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₫
                     </h2>
                 </div>
                 <div className="mt-6 md:mt-0">
                     <form onSubmit={handleDeposit} className="flex flex-col sm:flex-row gap-3">
-                         <div className="relative rounded-md shadow-sm">
+                        <div className="relative rounded-md shadow-sm">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span className="text-gray-500 sm:text-sm">$</span>
+                                <span className="text-gray-500 font-bold sm:text-sm">₫</span>
                             </div>
                             <input
-                              type="number"
-                              name="price"
-                              id="price"
-                              className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md text-gray-900 h-10"
-                              placeholder="0.00"
-                              value={depositAmount}
-                              onChange={(e) => setDepositAmount(e.target.value)}
-                              min="1"
-                              step="0.01"
-                              required
+                                type="number"
+                                name="price"
+                                id="price"
+                                className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md text-gray-900 h-10"
+                                placeholder="0.00"
+                                value={depositAmount}
+                                onChange={(e) => setDepositAmount(e.target.value)}
+                                min="1"
+                                step="1"
+                                required
                             />
                         </div>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             disabled={processing}
                             className="inline-flex justify-center items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 disabled:opacity-50"
                         >
                             {processing ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
-                            Deposit Funds
+                            Nạp Tiền
                         </button>
                     </form>
                 </div>
@@ -108,22 +107,22 @@ const Wallet = () => {
             {/* Transactions History */}
             <div className="bg-white rounded-xl shadow border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-100">
-                    <h3 className="text-lg font-medium text-gray-900">Transaction History</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Lịch Sử Giao Dịch</h3>
                 </div>
                 {transactions.length === 0 ? (
                     <div className="p-12 text-center text-gray-500">
-                        No transactions yet.
+                        Chưa có giao dịch nào.
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Số Tiền</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng Thái</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mô tả</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -140,24 +139,31 @@ const Wallet = () => {
                                                         <ArrowUpRight size={16} />
                                                     </div>
                                                 )}
-                                                <span className="ml-3 text-sm font-medium text-gray-900">{tx.type}</span>
+                                                <span className="ml-3 text-sm font-medium text-gray-900">
+                                                    {tx.type === 'DEPOSIT' ? 'Nạp Tiền' :
+                                                        tx.type === 'WITHDRAWAL' ? 'Rút Tiền' :
+                                                            tx.type === 'PAYMENT_RECEIVED' ? 'Nhận Thanh Toán' :
+                                                                tx.type === 'PAYMENT_SENT' ? 'Gửi Thanh Toán' :
+                                                                    tx.type}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className={`px-6 py-4 whitespace-nowrap text-sm font-bold ${tx.type === 'DEPOSIT' ? 'text-green-600' : 'text-gray-900'}`}>
-                                            {tx.type === 'DEPOSIT' ? '+' : '-'}${tx.amount.toFixed(2)}
+                                            {tx.type === 'DEPOSIT' ? '+' : '-'}{tx.amount.toLocaleString()} ₫
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                tx.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tx.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
                                                 tx.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                                            }`}>
-                                                {tx.status}
+                                                }`}>
+                                                {tx.status === 'COMPLETED' ? 'Hoàn thành' :
+                                                    tx.status === 'PENDING' ? 'Chờ xử lý' :
+                                                        tx.status === 'FAILED' ? 'Thất bại' : tx.status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div className="flex items-center">
-                                                <Clock size={14} className="mr-1.5 text-gray-400"/>
-                                                {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                <Clock size={14} className="mr-1.5 text-gray-400" />
+                                                {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
