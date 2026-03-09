@@ -21,17 +21,11 @@ public class SepayController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestBody SepayDto sepayDto) {
 
-        // Validate Authorization header
-        // Sepay sends "Apikey <YOUR_SECRET>"
-        if (authorization == null || !authorization.equals("Apikey " + apiSecret)) {
-            // For testing/compatibility, we might log a warning but proceed if dev mode,
-            // but strictly we should block.
-            // However, to avoid breaking the user's manual curl test if they don't include
-            // it,
-            // let's just log it for now or return 401.
-            // Given the user provided the secret, they expect security.
-            return ResponseEntity.status(401).body(new SimpleResponse(false, "Unauthorized: Invalid API Key"));
-        }
+        // Bỏ qua validate API Key theo yêu cầu
+        // if (authorization == null || !authorization.equals("Apikey " + apiSecret)) {
+        // return ResponseEntity.status(401).body(new SimpleResponse(false,
+        // "Unauthorized: Invalid API Key"));
+        // }
 
         try {
             sepayService.processWebhook(sepayDto);
