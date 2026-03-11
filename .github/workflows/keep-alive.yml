@@ -1,0 +1,17 @@
+name: Keep Render Server Awake
+
+on:
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Backend
+        run: |
+          # DONT FORGET TO CHANGE THE URL BELOW to your actual Render URL
+          curl -s https://tamnt111-web-202-miniproject.onrender.com/api/campaigns > /dev/null
+          echo "Pinged Render server to keep it awake!"

@@ -34,10 +34,60 @@ const WalletPage = () => {
     const [processing, setProcessing] = useState(false);
     const [filter, setFilter] = useState<'ALL' | 'IN' | 'OUT'>('ALL');
     const [depositAmount, setDepositAmount] = useState('10000');
+    const [timeLeft, setTimeLeft] = useState(900); // 15 minutes = 900 seconds
+    const [initialBalance, setInitialBalance] = useState<number | null>(null);
 
     useEffect(() => {
         fetchWalletData();
     }, []);
+
+    // Countdown Timer Logic
+    useEffect(() => {
+        if (!showDepositModal) return;
+
+        // Reset timer and balance snapshot when modal opens
+        setTimeLeft(900);
+        setInitialBalance(balance);
+
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    setShowDepositModal(false);
+                    alert("Thời gian nạp tiền đã hết. Vui lòng tạo yêu cầu mới.");
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [showDepositModal]);
+
+    // Polling Logic for Auto-close
+    useEffect(() => {
+        if (!showDepositModal || initialBalance === null) return;
+
+        const pollInterval = setInterval(async () => {
+            try {
+                const response = await api.get('/wallet/summary');
+                const newBalance = response.data.balance;
+
+                if (newBalance > initialBalance) {
+                    // Diopsit detected
+                    setBalance(newBalance);
+                    setTransactions(response.data.transactions);
+                    setShowDepositModal(false);
+                    alert("Nạp tiền thành công! Số dư đã được cập nhật.");
+                    clearInterval(pollInterval);
+                }
+            } catch (error) {
+                console.error("Polling wallet data failed", error);
+            }
+        }, 5000); // Check every 5 seconds
+
+        return () => clearInterval(pollInterval);
+    }, [showDepositModal, initialBalance]);
 
     const fetchWalletData = async () => {
         setLoading(true);
@@ -287,8 +337,17 @@ const WalletPage = () => {
 
                             <div className="space-y-4">
                                 <div>
-                                    <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-2">Thông tin Chuyển khoản Thủ công</p>
-                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Thông tin Chuyển khoản Thủ công</p>
+                                        <span className={`text-xs font-bold ${timeLeft < 300 ? 'text-red-500 animate-pulse' : 'text-indigo-600'}`}>
+                                            Thời gian: {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{String(timeLeft % 60).padStart(2, '0')}
+                                        </span>
+                                    </div>
+                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 relative overflow-hidden">
+                                        <div
+                                            className="absolute bottom-0 left-0 h-1 bg-indigo-500 transition-all duration-1000 ease-linear"
+                                            style={{ width: `${(timeLeft / 900) * 100}%` }}
+                                        />
                                         <p className="text-xs text-indigo-600 font-medium mb-1 text-center">Nội dung Chuyển khoản</p>
                                         <div className="flex items-center justify-center">
                                             <span className="text-2xl font-mono font-black text-indigo-700 tracking-wider">ICS{String(userId).padStart(6, '0')}</span>
