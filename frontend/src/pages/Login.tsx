@@ -177,7 +177,7 @@ const Login = () => {
  </div>
 
  <div className="flex justify-center gap-4">
- <a href={GOOGLE_OAUTH_URL} target="_blank" rel="noopener noreferrer" className="p-3 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors">
+ <a href={GOOGLE_OAUTH_URL} className="p-3 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors">
  <Chrome className="w-6 h-6 text-gray-600" /> {/* Using Chrome icon as generic Google placeholder or use real SVG if desired */}
  </a>
  <button type="button" className="p-3 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors">
