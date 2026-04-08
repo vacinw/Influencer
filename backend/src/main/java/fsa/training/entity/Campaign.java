@@ -7,7 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "campaigns")
+@Table(name = "campaigns", indexes = {
+    @Index(name = "idx_campaign_creator", columnList = "creator_id"),
+    @Index(name = "idx_campaign_status", columnList = "status")
+})
 public class Campaign {
     
     @Id
@@ -24,12 +27,14 @@ public class Campaign {
     @CollectionTable(name = "campaign_images", 
                      joinColumns = @JoinColumn(name = "campaign_id", nullable = false))
     @Column(name = "image_url")
+    @org.hibernate.annotations.BatchSize(size = 20)
     private List<String> images = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "campaign_videos", 
                      joinColumns = @JoinColumn(name = "campaign_id", nullable = false))
     @Column(name = "video_url")
+    @org.hibernate.annotations.BatchSize(size = 20)
     private List<String> videos = new ArrayList<>();
     
     private LocalDate deadline;
@@ -40,12 +45,14 @@ public class Campaign {
     @CollectionTable(name = "campaign_tags", 
                      joinColumns = @JoinColumn(name = "campaign_id", nullable = false))
     @Column(name = "tag")
+    @org.hibernate.annotations.BatchSize(size = 20)
     private List<String> tags = new ArrayList<>();
     
     @ElementCollection
     @CollectionTable(name = "campaign_platforms", 
                      joinColumns = @JoinColumn(name = "campaign_id", nullable = false))
     @Column(name = "platform")
+    @org.hibernate.annotations.BatchSize(size = 20)
     private List<String> platforms = new ArrayList<>();
     
     @ManyToOne
@@ -54,8 +61,29 @@ public class Campaign {
     
     private String layoutStyle; // "CLASSIC", "MODERN", "MINIMAL"
 
+    @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<Application> applications = new ArrayList<>();
+
+    @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<Job> jobs = new ArrayList<>();
+
+    @OneToMany(mappedBy = "campaign", cascade = CascadeType.REMOVE)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<Review> reviews = new ArrayList<>();
+
     @org.hibernate.annotations.Formula("(SELECT count(a.id) FROM applications a WHERE a.campaign_id = id)")
     private int applicantCount;
+
+    @org.hibernate.annotations.Formula("(SELECT count(a.id) FROM applications a WHERE a.campaign_id = id AND a.status IN ('ACCEPTED', 'COMPLETED'))")
+    private int approvedApplicantCount;
+
+    @Column(columnDefinition = "DOUBLE default 0.0")
+    private Double budget = 0.0;
+
+    @Column(columnDefinition = "INT default 1")
+    private Integer targetApplicants = 1;
 
     public int getApplicantCount() {
         return applicantCount;
@@ -63,6 +91,30 @@ public class Campaign {
 
     public void setApplicantCount(int applicantCount) {
         this.applicantCount = applicantCount;
+    }
+
+    public int getApprovedApplicantCount() {
+        return approvedApplicantCount;
+    }
+
+    public void setApprovedApplicantCount(int approvedApplicantCount) {
+        this.approvedApplicantCount = approvedApplicantCount;
+    }
+
+    public Double getBudget() {
+        return budget;
+    }
+
+    public void setBudget(Double budget) {
+        this.budget = budget;
+    }
+
+    public Integer getTargetApplicants() {
+        return targetApplicants;
+    }
+
+    public void setTargetApplicants(Integer targetApplicants) {
+        this.targetApplicants = targetApplicants;
     }
 
     // Getters and Setters

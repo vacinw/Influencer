@@ -1,8 +1,10 @@
 package fsa.training.controller;
 
+import fsa.training.dao.NotificationDao;
 import fsa.training.dao.TransactionDao;
 import fsa.training.dao.UserDao;
 import fsa.training.dao.WalletDao;
+import fsa.training.entity.Notification;
 import fsa.training.entity.Transaction;
 import fsa.training.entity.User;
 import fsa.training.entity.Wallet;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -21,6 +24,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/wallet")
+@Transactional
 public class WalletController {
 
     @Autowired
@@ -31,6 +35,9 @@ public class WalletController {
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private NotificationDao notificationDao;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -72,6 +79,9 @@ public class WalletController {
         response.put("balance", wallet.getBalance());
         response.put("transactions", recentTransactions);
         response.put("userId", user.getId()); // For payment syntax
+        response.put("bankName", wallet.getBankName());
+        response.put("bankAccountName", wallet.getBankAccountName());
+        response.put("bankAccountNumber", wallet.getBankAccountNumber());
 
         return ResponseEntity.ok(response);
     }
@@ -129,8 +139,12 @@ public class WalletController {
 
             Wallet wallet = getOrCreateWallet(user);
 
+            if (wallet.getBankName() == null || wallet.getBankAccountName() == null || wallet.getBankAccountNumber() == null) {
+                return ResponseEntity.badRequest().body("Bạn cần cập nhật thông tin ngân hàng trước khi rút tiền!");
+            }
+
             if (wallet.getBalance() < amount) {
-                return ResponseEntity.badRequest().body("Insufficient funds");
+                return ResponseEntity.badRequest().body("Số dư không đủ!");
             }
 
             // Update Balance
@@ -146,12 +160,43 @@ public class WalletController {
             tx.setDescription("Withdrawal Request");
             transactionDao.save(tx);
 
+            // Notify Admin
+            List<User> admins = userDao.findByRoleName("ADMIN");
+            for (User admin : admins) {
+                Notification notif = new Notification();
+                notif.setUser(admin);
+                notif.setTitle("Yêu cầu rút tiền mới");
+                notif.setContent("Người dùng " + user.getName() + " (" + user.getEmail() + ") vừa yêu cầu rút " + String.format("%,.0f", amount) + " VND. Vui lòng kiểm tra và duyệt trong mục Quản lý Rút tiền.");
+                notif.setLink("/admin/withdrawals");
+                notificationDao.save(notif);
+            }
+
             return ResponseEntity.ok(wallet);
 
         } catch (NumberFormatException e) {
             return ResponseEntity.badRequest().body("Invalid amount format");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Withdrawal failed: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/bank-info")
+    public ResponseEntity<?> updateBankInfo(@RequestBody Map<String, String> payload) {
+        User user = getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+        
+        try {
+            Wallet wallet = getOrCreateWallet(user);
+            if (payload.containsKey("bankName")) wallet.setBankName(payload.get("bankName"));
+            if (payload.containsKey("bankAccountName")) wallet.setBankAccountName(payload.get("bankAccountName"));
+            if (payload.containsKey("bankAccountNumber")) wallet.setBankAccountNumber(payload.get("bankAccountNumber"));
+            
+            walletDao.save(wallet);
+            return ResponseEntity.ok(wallet);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to update bank info: " + e.getMessage());
         }
     }
 }

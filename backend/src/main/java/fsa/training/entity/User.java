@@ -41,6 +41,7 @@ public class User implements UserDetails {
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "user_social_links", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "link")
+    @org.hibernate.annotations.BatchSize(size = 20)
     private Collection<String> socialLinks;
 
     private Double rating = 0.0;

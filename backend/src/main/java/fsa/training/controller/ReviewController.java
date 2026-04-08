@@ -1,11 +1,13 @@
 package fsa.training.controller;
 
 import fsa.training.dao.CampaignDao;
+import fsa.training.dao.JobDao;
 import fsa.training.dao.ReviewDao;
 import fsa.training.dao.UserDao;
 import fsa.training.dto.ReviewRequest;
 import fsa.training.dto.ReviewResponse;
 import fsa.training.entity.Campaign;
+import fsa.training.entity.Job;
 import fsa.training.entity.Review;
 import fsa.training.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class ReviewController {
     @Autowired
     private CampaignDao campaignDao;
 
+    @Autowired
+    private JobDao jobDao;
+
     @PostMapping("/create")
     public ResponseEntity<?> createReview(@RequestBody ReviewRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -49,9 +54,11 @@ public class ReviewController {
             return ResponseEntity.badRequest().body("Receiver or Campaign not found");
         }
 
-        // Check if creator is actually the creator of the campaign
-        if (!campaign.getCreator().getId().equals(creator.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only the campaign creator can write a review");
+        boolean isBrandReviewingKOL = campaign.getCreator().getId().equals(creator.getId()) && jobDao.existsByCampaignAndInfluencer(campaign, receiver);
+        boolean isKOLReviewingBrand = campaign.getCreator().getId().equals(receiver.getId()) && jobDao.existsByCampaignAndInfluencer(campaign, creator);
+
+        if (!isBrandReviewingKOL && !isKOLReviewingBrand) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You do not have permission to write a review for this user on this campaign");
         }
 
         // Check if a review already exists

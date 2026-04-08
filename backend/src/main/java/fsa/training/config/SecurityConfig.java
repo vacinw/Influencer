@@ -72,8 +72,8 @@ public class SecurityConfig {
                         .requestMatchers("/", "/home", "/api/login", "/api/logout", "/api/register", "/register",
                                 "/login", "/css/**",
                                 "/js/**", "/imgs/**",
-                                "/webjars/**", "/error", "/oauth2/**", "/api/users/role", "/api/auth/**",
-                                "/api/campaign/public", "/api/sepay/**") // Added /api/auth/** for token exchange
+                                "/webjars/**", "/error", "/oauth2/**", "/api/users/role", "/api/users/public/**", "/api/auth/**",
+                                "/api/campaign/public", "/api/sepay/**", "/api/banners/active", "/api/categories")
                         // permitAll for now or keep
                         // authenticated
                         .permitAll()
@@ -103,10 +103,18 @@ public class SecurityConfig {
                                 .userService(customOAuth2UserService))
                         .successHandler(customSuccessHandler))
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        .defaultAuthenticationEntryPointFor(
+                                (request, response, authException) -> {
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    response.setContentType("application/json");
+                                    response.getWriter().write("{\"status\":\"error\",\"message\":\"Unauthorized\"}");
+                                },
+                                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/api/**")
+                        )
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType("application/json");
-                            response.getWriter().write("{\"status\":\"error\",\"message\":\"Unauthorized\"}");
+                            response.getWriter().write("{\"status\":\"error\",\"message\":\"Forbidden\"}");
                         }))
                 .logout(logout -> logout
                         .logoutUrl("/api/logout") // Logout is practically client-side in JWT, but we keep endpoint

@@ -155,42 +155,49 @@ public class JobController {
             return ResponseEntity.status(403).body("Only the campaign creator can complete the job");
         }
         
-        // 1. Financial Transaction
-        User creator = currentUser;
+        // 1. Financial Transaction (Escrow Distribution)
         User influencer = job.getInfluencer();
         Double amount = job.getPrice() != null ? job.getPrice() : 0.0;
         
         if (amount > 0) {
-            fsa.training.entity.Wallet creatorWallet = walletDao.findByUser(creator).orElseThrow(() -> new RuntimeException("Creator wallet not found"));
             fsa.training.entity.Wallet influencerWallet = walletDao.findByUser(influencer).orElseThrow(() -> new RuntimeException("Influencer wallet not found"));
             
-            if (creatorWallet.getBalance() < amount) {
-                return ResponseEntity.badRequest().body("Insufficient funds in wallet");
-            }
+            Double commission = amount * 0.10; // 10% admin commission taken from brand upfront
+            Double influencerPayout = amount; // FULL AMOUNT to the influencer
             
-            // Transfer
-            creatorWallet.setBalance(creatorWallet.getBalance() - amount);
-            influencerWallet.setBalance(influencerWallet.getBalance() + amount);
-            
-            walletDao.save(creatorWallet);
+            // Payout Influencer
+            influencerWallet.setBalance(influencerWallet.getBalance() + influencerPayout);
             walletDao.save(influencerWallet);
-            
-            // Log Transactions
-            fsa.training.entity.Transaction debit = new fsa.training.entity.Transaction();
-            debit.setWallet(creatorWallet);
-            debit.setAmount(amount);
-            debit.setType("PAYMENT");
-            debit.setStatus("COMPLETED");
-            debit.setDescription("Payment for Job #" + job.getId() + ": " + job.getCampaign().getTitle());
-            transactionDao.save(debit);
             
             fsa.training.entity.Transaction credit = new fsa.training.entity.Transaction();
             credit.setWallet(influencerWallet);
-            credit.setAmount(amount);
+            credit.setAmount(influencerPayout);
             credit.setType("DEPOSIT");
             credit.setStatus("COMPLETED");
-            credit.setDescription("Payment received for Job #" + job.getId());
+            credit.setDescription("Payment received for Job #" + job.getId() + " (Fee deducted)");
             transactionDao.save(credit);
+
+            // Payout Admin
+            User adminUser = userDao.findAll().stream().filter(u -> u.getRole() != null && "ADMIN".equals(u.getRole().getName())).findFirst().orElse(null);
+            if (adminUser != null) {
+                fsa.training.entity.Wallet adminWallet = walletDao.findByUser(adminUser).orElse(null);
+                if (adminWallet == null) {
+                    adminWallet = new fsa.training.entity.Wallet();
+                    adminWallet.setUser(adminUser);
+                    adminWallet.setBalance(0.0);
+                    adminWallet = walletDao.save(adminWallet);
+                }
+                adminWallet.setBalance(adminWallet.getBalance() + commission);
+                walletDao.save(adminWallet);
+                
+                fsa.training.entity.Transaction adminCredit = new fsa.training.entity.Transaction();
+                adminCredit.setWallet(adminWallet);
+                adminCredit.setAmount(commission);
+                adminCredit.setType("DEPOSIT");
+                adminCredit.setStatus("COMPLETED");
+                adminCredit.setDescription("Commission from Job #" + job.getId());
+                transactionDao.save(adminCredit);
+            }
         }
 
         // 2. Update Job Status

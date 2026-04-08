@@ -1,9 +1,13 @@
 package fsa.training.controller;
 
 import fsa.training.dao.CampaignDao;
+import fsa.training.dao.TransactionDao;
 import fsa.training.dao.UserDao;
+import fsa.training.dao.WalletDao;
 import fsa.training.entity.Campaign;
+import fsa.training.entity.Transaction;
 import fsa.training.entity.User;
+import fsa.training.entity.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,6 +25,12 @@ public class CampaignController {
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private WalletDao walletDao;
+
+    @Autowired
+    private TransactionDao transactionDao;
 
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -46,6 +56,37 @@ public class CampaignController {
             if (currentUser == null) {
                 return ResponseEntity.status(401).body("Bạn cần đăng nhập để tạo chiến dịch!");
             }
+            
+            if (currentUser.getVerified() == null || !currentUser.getVerified()) {
+                return ResponseEntity.status(403).body("Bạn cần xác minh danh tính để tạo chiến dịch!");
+            }
+
+            Integer target = campaign.getTargetApplicants() != null ? campaign.getTargetApplicants() : 1;
+            Double baseBudget = campaign.getBudget() != null ? campaign.getBudget() : 0.0;
+            Double totalBudget = baseBudget * target;
+            Double commission = totalBudget * 0.10;
+            Double requiredAmount = totalBudget + commission;
+            
+            if (baseBudget > 0) {
+                Wallet wallet = walletDao.findByUser(currentUser).orElse(null);
+                if (wallet == null || wallet.getBalance() < requiredAmount) {
+                    return ResponseEntity.status(400).body("Số dư ví không đủ! Phí 1 job là " + String.format("%,.0f", baseBudget).replace(',', '.') + "₫ x " + target + " người = " + String.format("%,.0f", totalBudget).replace(',', '.') + "₫. Kèm 10% phí môi giới, tổng tạm giữ: " + String.format("%,.0f", requiredAmount).replace(',', '.') + "₫");
+                }
+
+                // Escrow deduction (110%)
+                wallet.setBalance(wallet.getBalance() - requiredAmount);
+                walletDao.save(wallet);
+
+                // Escrow transaction record
+                Transaction tx = new Transaction();
+                tx.setWallet(wallet);
+                tx.setAmount(requiredAmount);
+                tx.setType("HOLD");
+                tx.setStatus("COMPLETED");
+                tx.setDescription("Tạm giữ tiền đăng chiến dịch và phí HH (10%): " + campaign.getTitle());
+                transactionDao.save(tx);
+            }
+
             campaign.setCreator(currentUser);
 
             // Tags and Platforms are already in the list if sent via JSON properly.
@@ -108,7 +149,33 @@ public class CampaignController {
             return ResponseEntity.ok(existingCampaign);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Lỗi khi cập nhật chiến dịch: " + e.getMessage());
+        }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteCampaign(@PathVariable Long id) {
+        try {
+            User currentUser = getCurrentUser();
+            if (currentUser == null) {
+                return ResponseEntity.status(401).body("Unauthorized");
+            }
+
+            Campaign existingCampaign = campaignDao.findById(id).orElse(null);
+            if (existingCampaign == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            if (existingCampaign.getCreator() != null
+                    && !existingCampaign.getCreator().getId().equals(currentUser.getId()) &&
+                    (currentUser.getRole() == null || !currentUser.getRole().getName().equals("ADMIN"))) {
+                return ResponseEntity.status(403).body("Bạn không có quyền xóa chiến dịch này!");
+            }
+
+            campaignDao.delete(existingCampaign);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Lỗi khi xóa chiến dịch: " + e.getMessage());
+        }
     }
 
     @GetMapping("/my-campaigns")
@@ -166,12 +233,15 @@ public class CampaignController {
             jakarta.persistence.criteria.Predicate hiring = cb.equal(root.get("status"), "Đang tuyển");
             predicates.add(cb.or(active, hiring));
 
-            // Filter by Search (Title or Description)
             if (search != null && !search.isEmpty()) {
-                String likePattern = "%" + search.toLowerCase() + "%";
-                jakarta.persistence.criteria.Predicate titleLike = cb.like(cb.lower(root.get("title")), likePattern);
-                // jakarta.persistence.criteria.Predicate descLike = cb.like(cb.lower(root.get("description")), likePattern); // optional: search description too
-                predicates.add(titleLike);
+                query.distinct(true);
+                String likePattern = "%" + search + "%";
+                jakarta.persistence.criteria.Predicate titleLike = cb.like(root.get("title"), likePattern);
+                
+                jakarta.persistence.criteria.Join<Campaign, String> tagsJoin = root.join("tags", jakarta.persistence.criteria.JoinType.LEFT);
+                jakarta.persistence.criteria.Predicate tagLike = cb.like(tagsJoin, likePattern);
+                
+                predicates.add(cb.or(titleLike, tagLike));
             }
 
             // Filter by Platform (check if platforms list contains the platform)

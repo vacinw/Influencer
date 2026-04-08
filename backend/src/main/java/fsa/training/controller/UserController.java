@@ -140,8 +140,28 @@ public class UserController {
         // might not be set, we trust Jackson config or User entity definition (password
         // is field, hopefully ignored or DTO used).
         // For rapid dev phase 3, we return User but Frontend should only show public
-        // fields.
         // SECURITY NOTE: In prod, use a DTO.
         return ResponseEntity.ok(user);
+    }
+
+    @org.springframework.web.bind.annotation.GetMapping("/public/influencers")
+    public ResponseEntity<?> getPublicInfluencers(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String categoryName,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "0") int page,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "20") int size,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "desc") String sortDirection) {
+        
+        org.springframework.data.domain.Sort.Direction dir = sortDirection.equalsIgnoreCase("asc") ? 
+            org.springframework.data.domain.Sort.Direction.ASC : org.springframework.data.domain.Sort.Direction.DESC;
+            
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(dir, "rating"));
+        org.springframework.data.domain.Page<User> result;
+        
+        if (categoryName != null && !categoryName.isEmpty()) {
+            result = userDao.findInfluencersByCategoryName(categoryName, pageable);
+        } else {
+            result = userDao.findByRoleName("RECEIVER", pageable); // Assuming RECEIVER role is the influencer
+        }
+        return ResponseEntity.ok(result);
     }
 }

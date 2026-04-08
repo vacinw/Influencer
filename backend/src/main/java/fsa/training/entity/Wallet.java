@@ -16,6 +16,10 @@ public class Wallet {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
 
+    private String bankName;
+    private String bankAccountName;
+    private String bankAccountNumber;
+
     public Wallet() {}
     
     public Wallet(User user, Double balance) {
@@ -45,5 +49,29 @@ public class Wallet {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
+    }
+
+    public String getBankAccountName() {
+        return bankAccountName;
+    }
+
+    public void setBankAccountName(String bankAccountName) {
+        this.bankAccountName = bankAccountName;
+    }
+
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
     }
 }

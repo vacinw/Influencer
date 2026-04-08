@@ -132,6 +132,21 @@ public class ApplicationController {
         return ResponseEntity.ok(applications);
     }
 
+    @GetMapping("/creator-all")
+    public ResponseEntity<?> getAllCreatorApplications() {
+        User user = getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+
+        if (!user.getRole().getName().equals("CREATOR") && !user.getRole().getName().equals("ADMIN")) {
+            return ResponseEntity.status(403).body("Access denied");
+        }
+
+        List<Application> applications = applicationDao.findByCampaign_Creator(user);
+        return ResponseEntity.ok(applications);
+    }
+
     @GetMapping("/my-applications")
     public ResponseEntity<?> getMyApplications(
             @RequestParam(defaultValue = "0") int page,
@@ -182,11 +197,21 @@ public class ApplicationController {
 
         String newStatus = payload.get("status");
         if (newStatus != null) {
-            app.setStatus(newStatus);
-            applicationDao.save(app);
-
-            // If ACCEPTED, create a Job and default Milestone
+            // If ACCEPTED, create a Job and default Milestone and Check capacity
             if ("ACCEPTED".equals(newStatus)) {
+                long acceptedCount = applicationDao.findByCampaign(app.getCampaign()).stream()
+                    .filter(a -> "ACCEPTED".equals(a.getStatus()) && !a.getId().equals(app.getId()))
+                    .count();
+                Integer target = app.getCampaign().getTargetApplicants() != null ? app.getCampaign().getTargetApplicants() : 1;
+                
+                if (acceptedCount >= target) {
+                    return ResponseEntity.status(400).body("Chiến dịch đã đủ số lượng người ứng tuyển mục tiêu (" + target + " người).");
+                }
+
+                // Proceed to accept
+                app.setStatus(newStatus);
+                applicationDao.save(app);
+
                 // Check if job already exists
                 if (!jobDao.existsByCampaignAndInfluencer(app.getCampaign(), app.getReceiver())) {
                     fsa.training.entity.Job job = new fsa.training.entity.Job();
@@ -194,6 +219,15 @@ public class ApplicationController {
                     job.setInfluencer(app.getReceiver());
                     job.setDescription(app.getCampaign().getDescription());
                     job.setStatus("IN_PROGRESS");
+                    
+                    if (app.getCampaign().getBudget() != null && app.getCampaign().getBudget() > 0) {
+                        job.setPrice(app.getCampaign().getBudget());
+                    } else if (app.getBidAmount() != null) {
+                        job.setPrice(app.getBidAmount());
+                    } else {
+                        job.setPrice(0.0);
+                    }
+                    
                     job.setCreatedAt(LocalDateTime.now());
 
                     job = jobDao.save(job);
@@ -208,6 +242,9 @@ public class ApplicationController {
 
                     milestoneDao.save(milestone);
                 }
+            } else {
+                app.setStatus(newStatus);
+                applicationDao.save(app);
             }
 
             return ResponseEntity.ok(app);
@@ -233,6 +270,15 @@ public class ApplicationController {
                     job.setInfluencer(app.getReceiver());
                     job.setDescription(app.getCampaign().getDescription());
                     job.setStatus("IN_PROGRESS");
+                    
+                    if (app.getCampaign().getBudget() != null && app.getCampaign().getBudget() > 0) {
+                        job.setPrice(app.getCampaign().getBudget());
+                    } else if (app.getBidAmount() != null) {
+                        job.setPrice(app.getBidAmount());
+                    } else {
+                        job.setPrice(0.0);
+                    }
+                    
                     job.setCreatedAt(LocalDateTime.now());
 
                     job = jobDao.save(job);

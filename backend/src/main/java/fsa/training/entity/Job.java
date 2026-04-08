@@ -6,7 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "jobs")
+@Table(name = "jobs", indexes = {
+    @Index(name = "idx_job_campaign", columnList = "campaign_id"),
+    @Index(name = "idx_job_influencer", columnList = "influencer_id"),
+    @Index(name = "idx_job_status", columnList = "status")
+})
 public class Job {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +35,7 @@ public class Job {
     private LocalDateTime completedAt;
 
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 20)
     private List<Milestone> milestones = new ArrayList<>();
 
     // Getters and Setters

@@ -63,6 +63,7 @@ public class Milestone {
 
     @OneToMany(mappedBy = "milestone", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("createdAt DESC")
+    @org.hibernate.annotations.BatchSize(size = 20)
     private java.util.List<MilestoneHistory> history;
 
     public java.util.List<MilestoneHistory> getHistory() { return history; }

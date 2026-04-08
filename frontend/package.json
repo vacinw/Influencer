@@ -21,6 +21,7 @@
     "react-simple-star-rating": "^5.1.7",
     "react-simplemde-editor": "^5.2.0",
     "react-social-media-embed": "^2.5.18",
+    "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {

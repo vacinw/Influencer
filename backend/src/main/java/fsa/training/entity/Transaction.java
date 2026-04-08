@@ -26,7 +26,7 @@ public class Transaction {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "wallet_id", nullable = false)
     private Wallet wallet;
 

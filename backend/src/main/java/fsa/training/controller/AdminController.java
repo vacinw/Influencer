@@ -1,23 +1,34 @@
 package fsa.training.controller;
 
 import fsa.training.dao.CampaignDao;
+import fsa.training.dao.RoleDao;
+import fsa.training.dao.TransactionDao;
 import fsa.training.dao.UserDao;
+import fsa.training.dao.WalletDao;
 import fsa.training.entity.Campaign;
+import fsa.training.entity.Role;
+import fsa.training.entity.Transaction;
 import fsa.training.entity.User;
+import fsa.training.entity.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import fsa.training.dao.RoleDao;
-import fsa.training.entity.Role;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin")
+@Transactional
 public class AdminController {
 
     @Autowired
@@ -28,6 +39,12 @@ public class AdminController {
 
     @Autowired
     private RoleDao roleDao;
+
+    @Autowired
+    private TransactionDao transactionDao;
+
+    @Autowired
+    private WalletDao walletDao;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -192,13 +209,134 @@ public class AdminController {
     @GetMapping("/statistics")
     public ResponseEntity<?> getStatistics() {
         long totalUsers = userDao.count();
-        long totalCampaigns = campaignDao.count();
+        long activeCampaigns = campaignDao.findAll().stream()
+                .filter(c -> {
+                    String status = c.getStatus();
+                    if (status == null) return false;
+                    return status.equalsIgnoreCase("Active") || 
+                           status.equalsIgnoreCase("Đang tuyển") || 
+                           status.equalsIgnoreCase("IN_PROGRESS");
+                })
+                .count();
+
+        double totalRevenue = transactionDao.findAll().stream()
+                .filter(tx -> "DEPOSIT".equals(tx.getType()) && "COMPLETED".equals(tx.getStatus()))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
+
+        double totalCommission = transactionDao.findAll().stream()
+                .filter(tx -> tx.getDescription() != null && tx.getDescription().startsWith("Commission from Job") && "COMPLETED".equals(tx.getStatus()))
+                .mapToDouble(Transaction::getAmount)
+                .sum();
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", totalUsers);
-        stats.put("activeCampaigns", totalCampaigns);
-        stats.put("totalRevenue", 4500000); // Mock revenue
+        stats.put("activeCampaigns", activeCampaigns);
+        stats.put("totalRevenue", totalRevenue);
+        stats.put("totalCommission", totalCommission);
 
         return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/charts")
+    public ResponseEntity<?> getChartData(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        
+        LocalDate start;
+        LocalDate end;
+
+        try {
+            if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+                start = LocalDate.parse(startDate);
+                end = LocalDate.parse(endDate);
+            } else {
+                end = LocalDate.now();
+                start = end.minusDays(6); // Default 7 days including today
+            }
+        } catch (Exception e) {
+            end = LocalDate.now();
+            start = end.minusDays(6);
+        }
+
+        // If start is after end, swap them
+        if (start.isAfter(end)) {
+            LocalDate temp = start;
+            start = end;
+            end = temp;
+        }
+
+        LocalDateTime startDateTime = start.atStartOfDay();
+        LocalDateTime endDateTime = end.plusDays(1).atStartOfDay();
+
+        List<Transaction> transactions = transactionDao.findAll().stream()
+                .filter(tx -> tx.getCreatedAt() != null && !tx.getCreatedAt().isBefore(startDateTime) && tx.getCreatedAt().isBefore(endDateTime) && "COMPLETED".equals(tx.getStatus()))
+                .collect(Collectors.toList());
+
+        Map<String, Double> revenueMap = transactions.stream()
+                .filter(tx -> "DEPOSIT".equals(tx.getType()))
+                .collect(Collectors.groupingBy(
+                        tx -> tx.getCreatedAt().toLocalDate().toString(),
+                        Collectors.summingDouble(Transaction::getAmount)
+                ));
+
+        Map<String, Double> commissionMap = transactions.stream()
+                .filter(tx -> tx.getDescription() != null && tx.getDescription().startsWith("Commission from Job"))
+                .collect(Collectors.groupingBy(
+                        tx -> tx.getCreatedAt().toLocalDate().toString(),
+                        Collectors.summingDouble(Transaction::getAmount)
+                ));
+
+        List<Map<String, Object>> chartData = new ArrayList<>();
+        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(start, end);
+        
+        for (long i = 0; i <= daysBetween; i++) {
+            String dateStr = start.plusDays(i).toString();
+            Map<String, Object> dayData = new HashMap<>();
+            dayData.put("date", dateStr);
+            dayData.put("revenue", revenueMap.getOrDefault(dateStr, 0.0));
+            dayData.put("commission", commissionMap.getOrDefault(dateStr, 0.0));
+            chartData.add(dayData);
+        }
+
+        return ResponseEntity.ok(chartData);
+    }
+
+    @GetMapping("/withdrawals")
+    public ResponseEntity<?> getPendingWithdrawals() {
+        List<Transaction> pendingWithdrawals = transactionDao.findAll().stream()
+                .filter(tx -> "WITHDRAWAL".equals(tx.getType()) && "PENDING".equals(tx.getStatus()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(pendingWithdrawals);
+    }
+
+    @PutMapping("/withdrawals/{id}/approve")
+    public ResponseEntity<?> approveWithdrawal(@PathVariable Long id) {
+        Transaction tx = transactionDao.findById(id).orElse(null);
+        if (tx == null || !"WITHDRAWAL".equals(tx.getType()) || !"PENDING".equals(tx.getStatus())) {
+            return ResponseEntity.badRequest().body("Invalid withdrawal request");
+        }
+        
+        tx.setStatus("COMPLETED");
+        transactionDao.save(tx);
+        return ResponseEntity.ok(tx);
+    }
+
+    @PutMapping("/withdrawals/{id}/reject")
+    public ResponseEntity<?> rejectWithdrawal(@PathVariable Long id) {
+        Transaction tx = transactionDao.findById(id).orElse(null);
+        if (tx == null || !"WITHDRAWAL".equals(tx.getType()) || !"PENDING".equals(tx.getStatus())) {
+            return ResponseEntity.badRequest().body("Invalid withdrawal request");
+        }
+        
+        tx.setStatus("FAILED");
+        transactionDao.save(tx);
+        
+        // Refund the deducted amount back to user's wallet
+        Wallet wallet = tx.getWallet();
+        wallet.setBalance(wallet.getBalance() + tx.getAmount());
+        walletDao.save(wallet);
+        
+        return ResponseEntity.ok(tx);
     }
 }
