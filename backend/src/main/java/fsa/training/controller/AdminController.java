@@ -48,6 +48,15 @@ public class AdminController {
     private VerificationDao verificationDao;
 
     @Autowired
+    private NotificationDao notificationDao;
+
+    @Autowired
+    private ReviewDao reviewDao;
+
+    @Autowired
+    private SupportTicketDao supportTicketDao;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @GetMapping("/dashboard")
@@ -84,8 +93,27 @@ public class AdminController {
             return ResponseEntity.notFound().build();
         }
 
-        // Delete related records first
         try {
+            // Delete notifications for this user
+            notificationDao.deleteAll(notificationDao.findByUserOrderByCreatedAtDesc(user));
+
+            // Delete support tickets created by this user
+            supportTicketDao.findAll().stream()
+                .filter(t -> t.getUser() != null && t.getUser().getId().equals(id))
+                .forEach(supportTicketDao::delete);
+
+            // Delete reviews where user is reviewer or reviewee
+            reviewDao.findAll().stream()
+                .filter(r -> (r.getCreator() != null && r.getCreator().getId().equals(id)) ||
+                             (r.getReceiver() != null && r.getReceiver().getId().equals(id)))
+                .forEach(reviewDao::delete);
+
+            // If user is a CREATOR, delete their campaigns (cascades to applications, jobs)
+            if (user.getRole() != null && "CREATOR".equals(user.getRole().getName())) {
+                List<Campaign> campaigns = campaignDao.findByCreator(user);
+                campaignDao.deleteAll(campaigns);
+            }
+
             // Delete applications where user is receiver
             List<Application> applications = applicationDao.findByReceiver(user);
             applicationDao.deleteAll(applications);
@@ -98,13 +126,11 @@ public class AdminController {
             List<VerificationRequest> verifications = verificationDao.findByUser(user);
             verificationDao.deleteAll(verifications);
 
-            // Delete wallet
-            walletDao.findByUser(user).ifPresent(walletDao::delete);
-
             // Delete transactions related to user's wallet
             walletDao.findByUser(user).ifPresent(wallet -> {
                 List<Transaction> transactions = transactionDao.findByWalletOrderByCreatedAtDesc(wallet);
                 transactionDao.deleteAll(transactions);
+                walletDao.delete(wallet);
             });
 
             // Finally delete user
@@ -112,6 +138,7 @@ public class AdminController {
 
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Cannot delete user: " + e.getMessage());
         }
     }
