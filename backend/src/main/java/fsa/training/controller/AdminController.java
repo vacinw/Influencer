@@ -104,66 +104,92 @@ public class AdminController {
     }
 
     @DeleteMapping("/users/{id}")
+    @Transactional
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        User user = userDao.findById(id).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-
         try {
-            // Get wallet ID first if exists
-            Long walletId = walletDao.findByUser(user).map(w -> w.getId()).orElse(null);
-
-            // Use native SQL to delete all references to user
-            String[] sqls = {
-                "DELETE FROM milestone_history WHERE milestone_id IN (SELECT m.id FROM milestones m JOIN jobs j ON m.job_id = j.id WHERE j.influencer_id = " + id + ")",
-                "DELETE FROM milestones WHERE job_id IN (SELECT id FROM jobs WHERE influencer_id = " + id + ")",
-                "DELETE FROM jobs WHERE influencer_id = " + id,
-                "DELETE FROM applications WHERE user_id = " + id,
-                "DELETE FROM campaign_applications WHERE receiver_id = " + id,
-                "DELETE FROM campaign_receivers WHERE receiver_id = " + id,
-                "DELETE FROM campaigns WHERE creator_id = " + id,
-                "DELETE FROM verification_requests WHERE user_id = " + id,
-                "DELETE FROM support_tickets WHERE user_id = " + id,
-                "DELETE FROM notifications WHERE user_id = " + id,
-                "DELETE FROM reviews WHERE creator_id = " + id + " OR receiver_id = " + id,
-                "DELETE FROM user_social_links WHERE user_id = " + id,
-            };
-
-            for (String sql : sqls) {
-                try {
-                    int deleted = entityManager.createNativeQuery(sql).executeUpdate();
-                    System.out.println("Executed: " + sql.substring(0, 30) + "... deleted: " + deleted);
-                } catch (Exception e) {
-                    System.out.println("SQL error for: " + sql.substring(0, 30) + "... - " + e.getMessage());
+            // Delete in correct order using JPA
+            // 1. Delete user's jobs' milestones and milestone history
+            List<Job> userJobs = jobDao.findAll().stream()
+                .filter(j -> j.getInfluencer() != null && j.getInfluencer().getId().equals(id))
+                .toList();
+            for (Job job : userJobs) {
+                for (Milestone ms : job.getMilestones()) {
+                    if (ms.getHistory() != null) {
+                        milestoneHistoryDao.deleteAll(ms.getHistory());
+                    }
                 }
+                milestoneDao.deleteAll(job.getMilestones());
             }
+            jobDao.deleteAll(userJobs);
 
-            // Delete transactions and wallet
-            if (walletId != null) {
-                try {
-                    entityManager.createNativeQuery("DELETE FROM transactions WHERE wallet_id = " + walletId).executeUpdate();
-                    entityManager.createNativeQuery("DELETE FROM wallets WHERE id = " + walletId).executeUpdate();
-                } catch (Exception e) {
-                    System.out.println("Wallet delete error: " + e.getMessage());
-                }
+            // 2. Delete applications
+            List<Application> apps = applicationDao.findAll().stream()
+                .filter(a -> a.getReceiver() != null && a.getReceiver().getId().equals(id))
+                .toList();
+            applicationDao.deleteAll(apps);
+
+            // 3. Delete campaign applications
+            List<CampaignApplication> campApps = campaignApplicationDao.findAll().stream()
+                .filter(ca -> ca.getReceiver() != null && ca.getReceiver().getId().equals(id))
+                .toList();
+            campaignApplicationDao.deleteAll(campApps);
+
+            // 4. Delete campaign receivers
+            List<CampaignReceiver> campRecs = campaignReceiverDao.findAll().stream()
+                .filter(cr -> cr.getReceiver() != null && cr.getReceiver().getId().equals(id))
+                .toList();
+            campaignReceiverDao.deleteAll(campRecs);
+
+            // 5. Delete campaigns (creator's campaigns)
+            List<Campaign> campaigns = campaignDao.findAll().stream()
+                .filter(c -> c.getCreator() != null && c.getCreator().getId().equals(id))
+                .toList();
+            for (Campaign camp : campaigns) {
+                // Clear references before delete
+                camp.setCreator(null);
+                campaignDao.save(camp);
             }
+            campaignDao.deleteAll(campaigns);
 
-            // Delete user
-            int deletedUser = entityManager.createNativeQuery("DELETE FROM users WHERE id = " + id).executeUpdate();
-            System.out.println("User deleted: " + deletedUser);
+            // 6. Delete verification requests
+            List<VerificationRequest> verifs = verificationDao.findAll().stream()
+                .filter(v -> v.getUser() != null && v.getUser().getId().equals(id))
+                .toList();
+            verificationDao.deleteAll(verifs);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "User deleted successfully");
-            return ResponseEntity.ok(response);
+            // 7. Delete support tickets
+            List<SupportTicket> tickets = supportTicketDao.findAll().stream()
+                .filter(t -> t.getUser() != null && t.getUser().getId().equals(id))
+                .toList();
+            supportTicketDao.deleteAll(tickets);
+
+            // 8. Delete notifications
+            List<Notification> notifs = notificationDao.findAll().stream()
+                .filter(n -> n.getUser() != null && n.getUser().getId().equals(id))
+                .toList();
+            notificationDao.deleteAll(notifs);
+
+            // 9. Delete reviews
+            List<Review> reviews = reviewDao.findAll().stream()
+                .filter(r -> (r.getCreator() != null && r.getCreator().getId().equals(id)) ||
+                            (r.getReceiver() != null && r.getReceiver().getId().equals(id)))
+                .toList();
+            reviewDao.deleteAll(reviews);
+
+            // 10. Delete wallet and transactions
+            walletDao.findByUser(userDao.findById(id).orElse(null)).ifPresent(wallet -> {
+                List<Transaction> txns = transactionDao.findByWalletOrderByCreatedAtDesc(wallet);
+                transactionDao.deleteAll(txns);
+                walletDao.delete(wallet);
+            });
+
+            // 11. Delete user
+            userDao.deleteById(id);
+
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             e.printStackTrace();
-            String errorMsg = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Cannot delete user");
-            errorResponse.put("details", errorMsg);
-            return ResponseEntity.badRequest().body(errorResponse);
+            return ResponseEntity.badRequest().body("Delete failed: " + e.getMessage());
         }
     }
 
