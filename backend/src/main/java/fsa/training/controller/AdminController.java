@@ -131,10 +131,12 @@ public class AdminController {
             System.out.println("Deleting " + applications.size() + " applications");
             applicationDao.deleteAll(applications);
 
-            // Delete jobs where user is influencer
+            // Delete jobs where user is influencer (milestones and history will cascade)
             List<Job> jobs = jobDao.findByInfluencer(user);
             System.out.println("Deleting " + jobs.size() + " jobs");
-            jobDao.deleteAll(jobs);
+            for (Job job : jobs) {
+                jobDao.delete(job);
+            }
 
             // Delete verification requests
             List<VerificationRequest> verifications = verificationDao.findByUser(user);

@@ -61,7 +61,7 @@ public class Milestone {
     public String getSubmissionDescription() { return submissionDescription; }
     public void setSubmissionDescription(String submissionDescription) { this.submissionDescription = submissionDescription; }
 
-    @OneToMany(mappedBy = "milestone", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "milestone", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt DESC")
     @org.hibernate.annotations.BatchSize(size = 20)
     private java.util.List<MilestoneHistory> history;
