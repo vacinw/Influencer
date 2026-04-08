@@ -272,16 +272,19 @@ const AdminDashboard = () => {
  }
  };
 
- const handleDeleteUser = async (id: number) => {
- if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
- try {
- await api.delete(`/admin/users/${id}`);
- fetchUsers();
- } catch (error) {
- console.error("Failed to delete user", error);
- }
- }
- };
+  const handleDeleteUser = async (id: number) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
+      try {
+        await api.delete(`/admin/users/${id}`);
+        fetchUsers();
+        alert("Xóa người dùng thành công!");
+      } catch (error: any) {
+        console.error("Failed to delete user", error);
+        const errorMsg = error.response?.data || error.message || "Không thể xóa người dùng";
+        alert("Lỗi xóa: " + errorMsg);
+      }
+    }
+  };
 
  const openAddCampaignModal = () => {
  setEditingCampaign(null);

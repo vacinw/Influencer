@@ -48,6 +48,9 @@ public class AdminController {
     private VerificationDao verificationDao;
 
     @Autowired
+    private CampaignApplicationDao campaignApplicationDao;
+
+    @Autowired
     private NotificationDao notificationDao;
 
     @Autowired
@@ -93,7 +96,15 @@ public class AdminController {
             return ResponseEntity.notFound().build();
         }
 
+        System.out.println("=== DELETE USER DEBUG ===");
+        System.out.println("Deleting user: " + user.getEmail() + " (id=" + id + ")");
+
         try {
+            // Delete campaign applications where user is receiver
+            List<CampaignApplication> campaignApps = campaignApplicationDao.findByReceiver(user);
+            System.out.println("Found " + campaignApps.size() + " campaign applications");
+            campaignApplicationDao.deleteAll(campaignApps);
+
             // Delete notifications for this user
             notificationDao.deleteAll(notificationDao.findByUserOrderByCreatedAtDesc(user));
 
@@ -111,34 +122,42 @@ public class AdminController {
             // If user is a CREATOR, delete their campaigns (cascades to applications, jobs)
             if (user.getRole() != null && "CREATOR".equals(user.getRole().getName())) {
                 List<Campaign> campaigns = campaignDao.findByCreator(user);
+                System.out.println("Deleting " + campaigns.size() + " campaigns");
                 campaignDao.deleteAll(campaigns);
             }
 
             // Delete applications where user is receiver
             List<Application> applications = applicationDao.findByReceiver(user);
+            System.out.println("Deleting " + applications.size() + " applications");
             applicationDao.deleteAll(applications);
 
             // Delete jobs where user is influencer
             List<Job> jobs = jobDao.findByInfluencer(user);
+            System.out.println("Deleting " + jobs.size() + " jobs");
             jobDao.deleteAll(jobs);
 
             // Delete verification requests
             List<VerificationRequest> verifications = verificationDao.findByUser(user);
+            System.out.println("Deleting " + verifications.size() + " verification requests");
             verificationDao.deleteAll(verifications);
 
             // Delete transactions related to user's wallet
             walletDao.findByUser(user).ifPresent(wallet -> {
+                System.out.println("Deleting wallet and transactions");
                 List<Transaction> transactions = transactionDao.findByWalletOrderByCreatedAtDesc(wallet);
                 transactionDao.deleteAll(transactions);
                 walletDao.delete(wallet);
             });
 
             // Finally delete user
+            System.out.println("Deleting user...");
             userDao.delete(user);
+            System.out.println("User deleted successfully");
 
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             e.printStackTrace();
+            System.out.println("Error deleting user: " + e.getMessage());
             return ResponseEntity.badRequest().body("Cannot delete user: " + e.getMessage());
         }
     }
