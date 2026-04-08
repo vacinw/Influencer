@@ -51,6 +51,9 @@ public class AdminController {
     private CampaignApplicationDao campaignApplicationDao;
 
     @Autowired
+    private CampaignReceiverDao campaignReceiverDao;
+
+    @Autowired
     private MilestoneDao milestoneDao;
 
     @Autowired
@@ -110,6 +113,12 @@ public class AdminController {
             List<CampaignApplication> campaignApps = campaignApplicationDao.findByReceiver(user);
             System.out.println("  Found " + campaignApps.size() + " campaign applications");
             campaignApplicationDao.deleteAll(campaignApps);
+            System.out.println("  Done");
+
+            System.out.println("Step 1b: Deleting campaign receivers...");
+            List<CampaignReceiver> campaignReceivers = campaignReceiverDao.findByReceiver(user);
+            System.out.println("  Found " + campaignReceivers.size() + " campaign receivers");
+            campaignReceiverDao.deleteAll(campaignReceivers);
             System.out.println("  Done");
 
             System.out.println("Step 2: Deleting notifications...");
