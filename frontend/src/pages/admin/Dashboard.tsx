@@ -280,7 +280,9 @@ const AdminDashboard = () => {
         alert("Xóa người dùng thành công!");
       } catch (error: any) {
         console.error("Failed to delete user", error);
-        const errorMsg = error.response?.data || error.message || "Không thể xóa người dùng";
+        const errorMsg = error.response?.data 
+          ? (typeof error.response.data === 'object' ? JSON.stringify(error.response.data) : error.response.data)
+          : error.message || "Không thể xóa người dùng";
         alert("Lỗi xóa: " + errorMsg);
       }
     }
