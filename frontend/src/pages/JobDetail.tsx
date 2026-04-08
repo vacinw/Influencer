@@ -20,14 +20,17 @@ const JobDetail = () => {
  const [evidenceUrl, setEvidenceUrl] = useState('');
  const [submissionDesc, setSubmissionDesc] = useState('');
 
- // Modal States
- const [showAddMilestone, setShowAddMilestone] = useState(false);
- const [newMilestone, setNewMilestone] = useState({ title: '', description: '', deadline: '' });
+  // Modal States
+  const [showAddMilestone, setShowAddMilestone] = useState(false);
+  const [newMilestone, setNewMilestone] = useState({ title: '', description: '', deadline: '' });
 
- const [rejectingId, setRejectingId] = useState<number | null>(null);
- const [rejectFeedback, setRejectFeedback] = useState('');
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectFeedback, setRejectFeedback] = useState('');
+  const [isRejecting, setIsRejecting] = useState(false);
 
- const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
 
  const [role, setRole] = useState('');
 
@@ -85,6 +88,7 @@ const JobDetail = () => {
   const confirmCompleteJob = async () => {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
+    setIsCompleting(true);
     try {
       await api.post(`/job/${id}/complete`, {});
       setShowCompleteModal(false);
@@ -92,6 +96,7 @@ const JobDetail = () => {
     } catch (error) {
       console.error("Failed to complete job", error);
     } finally {
+      setIsCompleting(false);
       isProcessingRef.current = false;
     }
   };
@@ -120,12 +125,14 @@ const JobDetail = () => {
   const handleApprove = async (milestoneId: number) => {
     if (isProcessingRef.current) return;
     isProcessingRef.current = true;
+    setIsApproving(true);
     try {
       await api.post(`/job/${id}/milestone/${milestoneId}/review`, { status: 'APPROVED' });
       fetchJob();
     } catch (error) {
       console.error("Failed to approve", error);
     } finally {
+      setIsApproving(false);
       isProcessingRef.current = false;
     }
   };
@@ -133,6 +140,7 @@ const JobDetail = () => {
   const handleReject = async () => {
     if (isProcessingRef.current || !rejectingId || !rejectFeedback) return;
     isProcessingRef.current = true;
+    setIsRejecting(true);
     try {
       await api.post(`/job/${id}/milestone/${rejectingId}/review`, {
         status: 'REJECTED',
@@ -144,6 +152,7 @@ const JobDetail = () => {
     } catch (error) {
       console.error("Failed to reject", error);
     } finally {
+      setIsRejecting(false);
       isProcessingRef.current = false;
     }
   };
@@ -441,13 +450,21 @@ const JobDetail = () => {
  setEvidenceUrl(e.target.value);
  }}
  />
- <button
- onClick={() => handleSubmit(milestone.id)}
- disabled={!evidenceUrl && submitting === milestone.id}
- className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 flex items-center"
- >
- <Send size={14} className="mr-1" /> Nộp Bài
- </button>
+  <button
+  onClick={() => handleSubmit(milestone.id)}
+  disabled={!evidenceUrl || submitting === milestone.id}
+  className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+  >
+  {submitting === milestone.id ? (
+    <>
+      <Loader2 size={14} className="mr-1 animate-spin" /> Đang nộp...
+    </>
+  ) : (
+    <>
+      <Send size={14} className="mr-1" /> Nộp Bài
+    </>
+  )}
+  </button>
  </div>
  </div>
  ) : (
@@ -474,23 +491,34 @@ const JobDetail = () => {
  </div>
  )}
 
- {role === 'CREATOR' && milestone.status === 'SUBMITTED' && (
- <div className="mt-6 border-t border-gray-100 pt-6 flex gap-4 justify-center">
- <button
- onClick={() => setRejectingId(milestone.id)}
- className="px-6 py-3 bg-white border-2 border-red-100 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 hover:border-red-200 transition-all duration-200 flex items-center shadow-sm active:scale-95"
- >
- <XCircle size={18} className="mr-2" /> Từ Chối
- </button>
- <button
- onClick={() => handleApprove(milestone.id)}
- className="group flex justify-center items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] transition-all duration-200 active:scale-95"
- >
- <CheckCircle size={18} className="mr-2 group-hover:scale-110 transition-transform" />
- <span>Duyệt Bài Nộp</span>
- </button>
- </div>
- )}
+  {role === 'CREATOR' && milestone.status === 'SUBMITTED' && (
+  <div className="mt-6 border-t border-gray-100 pt-6 flex gap-4 justify-center">
+  <button
+  onClick={() => setRejectingId(milestone.id)}
+  disabled={isApproving}
+  className="px-6 py-3 bg-white border-2 border-red-100 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 hover:border-red-200 transition-all duration-200 flex items-center shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+  <XCircle size={18} className="mr-2" /> Từ Chối
+  </button>
+  <button
+  onClick={() => handleApprove(milestone.id)}
+  disabled={isApproving}
+  className="group flex justify-center items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-green-500/30 hover:shadow-green-500/50 hover:scale-[1.02] transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+  {isApproving ? (
+    <>
+      <Loader2 size={18} className="mr-2 animate-spin" />
+      <span>Đang duyệt...</span>
+    </>
+  ) : (
+    <>
+      <CheckCircle size={18} className="mr-2 group-hover:scale-110 transition-transform" />
+      <span>Duyệt Bài Nộp</span>
+    </>
+  )}
+  </button>
+  </div>
+  )}
 
  {/* History Timeline */}
  {milestone.history && milestone.history.length > 0 && (
@@ -594,10 +622,18 @@ const JobDetail = () => {
  value={rejectFeedback}
  onChange={(e) => setRejectFeedback(e.target.value)}
  ></textarea>
- <div className="flex justify-end gap-2 mt-4">
- <button onClick={() => setRejectingId(null)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Hủy bỏ</button>
- <button onClick={handleReject} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Xác Nhận Từ Chối</button>
- </div>
+  <div className="flex justify-end gap-2 mt-4">
+  <button onClick={() => setRejectingId(null)} disabled={isRejecting} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded disabled:opacity-50">Hủy bỏ</button>
+  <button onClick={handleReject} disabled={isRejecting} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 flex items-center">
+    {isRejecting ? (
+      <>
+        <Loader2 size={16} className="mr-1 animate-spin" /> Đang từ chối...
+      </>
+    ) : (
+      'Xác Nhận Từ Chối'
+    )}
+  </button>
+  </div>
  </div>
  </div>
  )}
@@ -620,20 +656,28 @@ const JobDetail = () => {
  <li>Cho phép cả hai bên để lại đánh giá.</li>
  </ul>
  </p>
- <div className="flex justify-end gap-3 mt-6">
- <button
- onClick={() => setShowCompleteModal(false)}
- className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
- >
- Hủy bỏ
- </button>
- <button
- onClick={confirmCompleteJob}
- className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
- >
- Xác Nhận Hoàn Thành
- </button>
- </div>
+  <div className="flex justify-end gap-3 mt-6">
+  <button
+  onClick={() => setShowCompleteModal(false)}
+  disabled={isCompleting}
+  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium disabled:opacity-50"
+  >
+  Hủy bỏ
+  </button>
+  <button
+  onClick={confirmCompleteJob}
+  disabled={isCompleting}
+  className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+  >
+  {isCompleting ? (
+    <>
+      <Loader2 size={16} className="mr-1 animate-spin" /> Đang xử lý...
+    </>
+  ) : (
+    'Xác Nhận Hoàn Thành'
+  )}
+  </button>
+  </div>
  </div>
  </div>
  )}
