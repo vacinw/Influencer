@@ -1,15 +1,7 @@
 package fsa.training.controller;
 
-import fsa.training.dao.CampaignDao;
-import fsa.training.dao.RoleDao;
-import fsa.training.dao.TransactionDao;
-import fsa.training.dao.UserDao;
-import fsa.training.dao.WalletDao;
-import fsa.training.entity.Campaign;
-import fsa.training.entity.Role;
-import fsa.training.entity.Transaction;
-import fsa.training.entity.User;
-import fsa.training.entity.Wallet;
+import fsa.training.dao.*;
+import fsa.training.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -47,6 +39,15 @@ public class AdminController {
     private WalletDao walletDao;
 
     @Autowired
+    private ApplicationDao applicationDao;
+
+    @Autowired
+    private JobDao jobDao;
+
+    @Autowired
+    private VerificationDao verificationDao;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @GetMapping("/dashboard")
@@ -78,11 +79,41 @@ public class AdminController {
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        if (!userDao.existsById(id)) {
+        User user = userDao.findById(id).orElse(null);
+        if (user == null) {
             return ResponseEntity.notFound().build();
         }
-        userDao.deleteById(id);
-        return ResponseEntity.ok().build();
+
+        // Delete related records first
+        try {
+            // Delete applications where user is receiver
+            List<Application> applications = applicationDao.findByReceiver(user);
+            applicationDao.deleteAll(applications);
+
+            // Delete jobs where user is influencer
+            List<Job> jobs = jobDao.findByInfluencer(user);
+            jobDao.deleteAll(jobs);
+
+            // Delete verification requests
+            List<VerificationRequest> verifications = verificationDao.findByUser(user);
+            verificationDao.deleteAll(verifications);
+
+            // Delete wallet
+            walletDao.findByUser(user).ifPresent(walletDao::delete);
+
+            // Delete transactions related to user's wallet
+            walletDao.findByUser(user).ifPresent(wallet -> {
+                List<Transaction> transactions = transactionDao.findByWalletOrderByCreatedAtDesc(wallet);
+                transactionDao.deleteAll(transactions);
+            });
+
+            // Finally delete user
+            userDao.delete(user);
+
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Cannot delete user: " + e.getMessage());
+        }
     }
 
     @PostMapping("/users")
