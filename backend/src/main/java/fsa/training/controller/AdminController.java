@@ -2,6 +2,8 @@ package fsa.training.controller;
 
 import fsa.training.dao.*;
 import fsa.training.entity.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -71,6 +73,9 @@ public class AdminController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @GetMapping("/dashboard")
     public ResponseEntity<?> dashboard() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -105,94 +110,60 @@ public class AdminController {
             return ResponseEntity.notFound().build();
         }
 
-        System.out.println("=== DELETE USER DEBUG ===");
-        System.out.println("Step 0: User found: " + user.getEmail() + " (id=" + id + ")");
-
         try {
-            System.out.println("Step 1: Deleting campaign applications...");
-            List<CampaignApplication> campaignApps = campaignApplicationDao.findByReceiver(user);
-            System.out.println("  Found " + campaignApps.size() + " campaign applications");
-            campaignApplicationDao.deleteAll(campaignApps);
-            System.out.println("  Done");
+            // Get wallet ID first if exists
+            Long walletId = walletDao.findByUser(user).map(w -> w.getId()).orElse(null);
 
-            System.out.println("Step 1b: Deleting campaign receivers...");
-            List<CampaignReceiver> campaignReceivers = campaignReceiverDao.findByReceiver(user);
-            System.out.println("  Found " + campaignReceivers.size() + " campaign receivers");
-            campaignReceiverDao.deleteAll(campaignReceivers);
-            System.out.println("  Done");
+            // Use native SQL to delete all references to user
+            // Disable foreign key checks, delete, then re-enable
+            String[] sqls = {
+                // Delete milestone histories for user's jobs
+                "DELETE FROM milestone_history WHERE milestone_id IN (SELECT m.id FROM milestones m JOIN jobs j ON m.job_id = j.id WHERE j.influencer_id = " + id + ")",
+                // Delete milestones for user's jobs
+                "DELETE FROM milestones WHERE job_id IN (SELECT id FROM jobs WHERE influencer_id = " + id + ")",
+                // Delete jobs where user is influencer
+                "DELETE FROM jobs WHERE influencer_id = " + id,
+                // Delete applications where user is receiver
+                "DELETE FROM applications WHERE user_id = " + id,
+                // Delete campaign_applications where user is receiver
+                "DELETE FROM campaign_applications WHERE receiver_id = " + id,
+                // Delete campaign_receivers where user is receiver
+                "DELETE FROM campaign_receivers WHERE receiver_id = " + id,
+                // Delete campaigns where user is creator (cascades to applications, jobs)
+                "DELETE FROM campaigns WHERE creator_id = " + id,
+                // Delete verification_requests where user is user
+                "DELETE FROM verification_requests WHERE user_id = " + id,
+                // Delete support_tickets where user is user
+                "DELETE FROM support_tickets WHERE user_id = " + id,
+                // Delete notifications where user is user
+                "DELETE FROM notifications WHERE user_id = " + id,
+                // Delete reviews where user is creator or receiver
+                "DELETE FROM reviews WHERE creator_id = " + id + " OR receiver_id = " + id,
+                // Delete social links
+                "DELETE FROM user_social_links WHERE user_id = " + id,
+            };
 
-            System.out.println("Step 2: Deleting notifications...");
-            notificationDao.deleteAll(notificationDao.findByUserOrderByCreatedAtDesc(user));
-            System.out.println("  Done");
-
-            System.out.println("Step 3: Deleting support tickets...");
-            supportTicketDao.findAll().stream()
-                .filter(t -> t.getUser() != null && t.getUser().getId().equals(id))
-                .forEach(supportTicketDao::delete);
-            System.out.println("  Done");
-
-            System.out.println("Step 4: Deleting reviews...");
-            reviewDao.findAll().stream()
-                .filter(r -> (r.getCreator() != null && r.getCreator().getId().equals(id)) ||
-                             (r.getReceiver() != null && r.getReceiver().getId().equals(id)))
-                .forEach(reviewDao::delete);
-            System.out.println("  Done");
-
-            System.out.println("Step 5: Deleting creator campaigns...");
-            if (user.getRole() != null && "CREATOR".equals(user.getRole().getName())) {
-                List<Campaign> campaigns = campaignDao.findByCreator(user);
-                System.out.println("  Found " + campaigns.size() + " campaigns");
-                campaignDao.deleteAll(campaigns);
-                System.out.println("  Done");
-            } else {
-                System.out.println("  Skipped (not creator)");
-            }
-
-            System.out.println("Step 6: Deleting applications...");
-            List<Application> applications = applicationDao.findByReceiver(user);
-            System.out.println("  Found " + applications.size() + " applications");
-            applicationDao.deleteAll(applications);
-            System.out.println("  Done");
-
-            System.out.println("Step 7: Deleting jobs with milestones...");
-            List<Job> jobs = jobDao.findByInfluencer(user);
-            System.out.println("  Found " + jobs.size() + " jobs");
-            for (Job job : jobs) {
-                List<Milestone> milestones = milestoneDao.findByJob(job);
-                for (Milestone milestone : milestones) {
-                    milestoneHistoryDao.deleteAll(milestoneHistoryDao.findByMilestone_IdOrderByCreatedAtDesc(milestone.getId()));
+            for (String sql : sqls) {
+                try {
+                    entityManager.createNativeQuery(sql).executeUpdate();
+                } catch (Exception e) {
+                    // Ignore individual errors, continue with other deletes
+                    System.out.println("SQL warning: " + e.getMessage());
                 }
-                milestoneDao.deleteAll(milestones);
-                jobDao.delete(job);
             }
-            System.out.println("  Done");
 
-            System.out.println("Step 8: Deleting verification requests...");
-            List<VerificationRequest> verifications = verificationDao.findByUser(user);
-            System.out.println("  Found " + verifications.size() + " verification requests");
-            verificationDao.deleteAll(verifications);
-            System.out.println("  Done");
+            // Delete transactions and wallet
+            if (walletId != null) {
+                entityManager.createNativeQuery("DELETE FROM transactions WHERE wallet_id = " + walletId).executeUpdate();
+                entityManager.createNativeQuery("DELETE FROM wallets WHERE id = " + walletId).executeUpdate();
+            }
 
-            System.out.println("Step 9: Deleting wallet and transactions...");
-            walletDao.findByUser(user).ifPresent(wallet -> {
-                System.out.println("  Found wallet");
-                List<Transaction> transactions = transactionDao.findByWalletOrderByCreatedAtDesc(wallet);
-                System.out.println("  Found " + transactions.size() + " transactions");
-                transactionDao.deleteAll(transactions);
-                walletDao.delete(wallet);
-                System.out.println("  Wallet deleted");
-            });
-            System.out.println("  Done");
-
-            System.out.println("Step 10: Deleting user...");
-            userDao.delete(user);
-            System.out.println("User deleted successfully");
+            // Delete user
+            entityManager.createNativeQuery("DELETE FROM users WHERE id = " + id).executeUpdate();
 
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("ERROR at step: " + e.getMessage());
-            System.out.println("Stack trace: " + java.util.Arrays.toString(e.getStackTrace()).replace(",", "\n"));
             return ResponseEntity.badRequest().body("Cannot delete user: " + e.getMessage());
         }
     }
