@@ -339,4 +339,13 @@ public class AdminController {
         
         return ResponseEntity.ok(tx);
     }
+
+    @GetMapping("/commissions")
+    public ResponseEntity<?> getCommissionHistory() {
+        List<Transaction> commissionTransactions = transactionDao.findAll().stream()
+                .filter(tx -> tx.getDescription() != null && tx.getDescription().startsWith("Commission from Job"))
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(commissionTransactions);
+    }
 }
