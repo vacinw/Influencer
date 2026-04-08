@@ -103,77 +103,87 @@ public class AdminController {
         }
 
         System.out.println("=== DELETE USER DEBUG ===");
-        System.out.println("Deleting user: " + user.getEmail() + " (id=" + id + ")");
+        System.out.println("Step 0: User found: " + user.getEmail() + " (id=" + id + ")");
 
         try {
-            // Delete campaign applications where user is receiver
+            System.out.println("Step 1: Deleting campaign applications...");
             List<CampaignApplication> campaignApps = campaignApplicationDao.findByReceiver(user);
-            System.out.println("Found " + campaignApps.size() + " campaign applications");
+            System.out.println("  Found " + campaignApps.size() + " campaign applications");
             campaignApplicationDao.deleteAll(campaignApps);
+            System.out.println("  Done");
 
-            // Delete notifications for this user
+            System.out.println("Step 2: Deleting notifications...");
             notificationDao.deleteAll(notificationDao.findByUserOrderByCreatedAtDesc(user));
+            System.out.println("  Done");
 
-            // Delete support tickets created by this user
+            System.out.println("Step 3: Deleting support tickets...");
             supportTicketDao.findAll().stream()
                 .filter(t -> t.getUser() != null && t.getUser().getId().equals(id))
                 .forEach(supportTicketDao::delete);
+            System.out.println("  Done");
 
-            // Delete reviews where user is reviewer or reviewee
+            System.out.println("Step 4: Deleting reviews...");
             reviewDao.findAll().stream()
                 .filter(r -> (r.getCreator() != null && r.getCreator().getId().equals(id)) ||
                              (r.getReceiver() != null && r.getReceiver().getId().equals(id)))
                 .forEach(reviewDao::delete);
+            System.out.println("  Done");
 
-            // If user is a CREATOR, delete their campaigns (cascades to applications, jobs)
+            System.out.println("Step 5: Deleting creator campaigns...");
             if (user.getRole() != null && "CREATOR".equals(user.getRole().getName())) {
                 List<Campaign> campaigns = campaignDao.findByCreator(user);
-                System.out.println("Deleting " + campaigns.size() + " campaigns");
+                System.out.println("  Found " + campaigns.size() + " campaigns");
                 campaignDao.deleteAll(campaigns);
+                System.out.println("  Done");
+            } else {
+                System.out.println("  Skipped (not creator)");
             }
 
-            // Delete applications where user is receiver
+            System.out.println("Step 6: Deleting applications...");
             List<Application> applications = applicationDao.findByReceiver(user);
-            System.out.println("Deleting " + applications.size() + " applications");
+            System.out.println("  Found " + applications.size() + " applications");
             applicationDao.deleteAll(applications);
+            System.out.println("  Done");
 
-            // Delete jobs where user is influencer - delete milestones and history first
+            System.out.println("Step 7: Deleting jobs with milestones...");
             List<Job> jobs = jobDao.findByInfluencer(user);
-            System.out.println("Deleting " + jobs.size() + " jobs with milestones");
+            System.out.println("  Found " + jobs.size() + " jobs");
             for (Job job : jobs) {
-                // Delete milestone history first
                 List<Milestone> milestones = milestoneDao.findByJob(job);
                 for (Milestone milestone : milestones) {
                     milestoneHistoryDao.deleteAll(milestoneHistoryDao.findByMilestone_IdOrderByCreatedAtDesc(milestone.getId()));
                 }
-                // Delete milestones
                 milestoneDao.deleteAll(milestones);
-                // Delete job
                 jobDao.delete(job);
             }
+            System.out.println("  Done");
 
-            // Delete verification requests
+            System.out.println("Step 8: Deleting verification requests...");
             List<VerificationRequest> verifications = verificationDao.findByUser(user);
-            System.out.println("Deleting " + verifications.size() + " verification requests");
+            System.out.println("  Found " + verifications.size() + " verification requests");
             verificationDao.deleteAll(verifications);
+            System.out.println("  Done");
 
-            // Delete transactions related to user's wallet
+            System.out.println("Step 9: Deleting wallet and transactions...");
             walletDao.findByUser(user).ifPresent(wallet -> {
-                System.out.println("Deleting wallet and transactions");
+                System.out.println("  Found wallet");
                 List<Transaction> transactions = transactionDao.findByWalletOrderByCreatedAtDesc(wallet);
+                System.out.println("  Found " + transactions.size() + " transactions");
                 transactionDao.deleteAll(transactions);
                 walletDao.delete(wallet);
+                System.out.println("  Wallet deleted");
             });
+            System.out.println("  Done");
 
-            // Finally delete user
-            System.out.println("Deleting user...");
+            System.out.println("Step 10: Deleting user...");
             userDao.delete(user);
             System.out.println("User deleted successfully");
 
             return ResponseEntity.ok().build();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Error deleting user: " + e.getMessage());
+            System.out.println("ERROR at step: " + e.getMessage());
+            System.out.println("Stack trace: " + java.util.Arrays.toString(e.getStackTrace()).replace(",", "\n"));
             return ResponseEntity.badRequest().body("Cannot delete user: " + e.getMessage());
         }
     }
