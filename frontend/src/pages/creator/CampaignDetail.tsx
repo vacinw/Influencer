@@ -102,24 +102,15 @@ const CampaignDetail = () => {
 
  const isOwner = user?.id === campaign.creator?.id;
 
-  const renderLayout = () => {
-    const isVerified = user?.isVerified;
-    const data = {
-      ...campaign,
-      tags: Array.isArray(campaign.tags) ? campaign.tags : (campaign.tags || '').split(','),
-      onApply: () => {
-        if (!isVerified) {
-          showToast('Bạn cần xác minh tài khoản trước khi ứng tuyển!', 'error');
-          navigate('/verification');
-          return;
-        }
-        setIsApplyModalOpen(true);
-      },
-      hasApplied: hasApplied,
-      isVerified: isVerified
-    };
+ const renderLayout = () => {
+ const data = {
+ ...campaign,
+ tags: Array.isArray(campaign.tags) ? campaign.tags : (campaign.tags || '').split(','),
+ onApply: () => setIsApplyModalOpen(true),
+ hasApplied: hasApplied
+ };
 
-    switch (campaign.layoutStyle) {
+ switch (campaign.layoutStyle) {
  case 'SHOWCASE': return <ShowcaseLayout data={data} />;
  case 'SOCIAL': return <SocialLayout data={data} />;
  case 'MINIMAL': return <MinimalLayout data={data} />;

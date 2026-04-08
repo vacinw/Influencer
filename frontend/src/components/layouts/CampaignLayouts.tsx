@@ -4,24 +4,23 @@ import remarkGfm from 'remark-gfm';
 import { Link } from 'react-router-dom';
 
 interface CampaignData {
-  title: string;
-  description: string;
-  images: string[];
-  videos: string[];
-  deadline: string;
-  tags: string[]; // Might come as string or array depending on use, we'll normalize
-  platforms: string[];
-  budget?: number;
-  targetApplicants?: number;
-  approvedApplicantCount?: number;
-  creator?: {
-    id?: number;
-    name: string;
-    email: string;
-  }
-  onApply?: () => void;
-  hasApplied?: boolean;
-  isVerified?: boolean;
+ title: string;
+ description: string;
+ images: string[];
+ videos: string[];
+ deadline: string;
+ tags: string[]; // Might come as string or array depending on use, we'll normalize
+ platforms: string[];
+ budget?: number;
+ targetApplicants?: number;
+ approvedApplicantCount?: number;
+ creator?: {
+ id?: number;
+ name: string;
+ email: string;
+ }
+ onApply?: () => void;
+ hasApplied?: boolean;
 }
 
 // Helper to normalize tags
@@ -99,12 +98,12 @@ export const ClassicLayout = ({ data }: { data: CampaignData }) => (
  </div>
  </div>
 
-  <button 
-  onClick={data.onApply}
-  disabled={data.hasApplied || !data.isVerified || (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1)}
-  className={`w-full py-3 rounded-lg font-medium transition-colors ${data.hasApplied ? 'bg-green-600 text-white cursor-default' : !data.isVerified ? 'bg-yellow-500 text-white cursor-not-allowed' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`}>
-  {data.hasApplied ? 'Đã Ứng Tuyển' : !data.isVerified ? 'Cần Xác Minh' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'Đã Đủ Số Lượng' : 'Ứng Tuyển Ngay'}
-  </button>
+ <button 
+ onClick={data.onApply}
+ disabled={data.hasApplied || (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1)}
+ className={`w-full py-3 rounded-lg font-medium transition-colors ${data.hasApplied ? 'bg-green-600 text-white cursor-default' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'}`}>
+ {data.hasApplied ? 'Đã Ứng Tuyển' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'Đã Đủ Số Lượng' : 'Ứng Tuyển Ngay'}
+ </button>
  <p className="text-xs text-center text-gray-500">Contact: {data.creator?.id ? <Link to={`/profile/${data.creator.id}`} className="text-indigo-600 hover:underline">{data.creator.email || data.creator.name}</Link> : (data.creator?.email || 'Creator')}</p>
  </div>
  </div>
@@ -163,12 +162,12 @@ export const ShowcaseLayout = ({ data }: { data: CampaignData }) => (
  </div>
 
  <div className="text-center">
-  <button 
-  onClick={data.onApply}
-  disabled={data.hasApplied || !data.isVerified || (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1)}
-  className={`px-12 py-4 rounded-full text-xl font-bold transition-colors ${data.hasApplied ? 'bg-green-600 text-white cursor-default' : !data.isVerified ? 'bg-yellow-500 text-white cursor-not-allowed' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'bg-gray-500 text-gray-200 cursor-not-allowed' : 'bg-white text-black hover:bg-gray-200'}`}>
-  {data.hasApplied ? 'Đã Ứng Tuyển' : !data.isVerified ? 'Cần Xác Minh' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'Đã Đủ Số Lượng' : 'Ứng Tuyển Ngay'}
-  </button>
+ <button 
+ onClick={data.onApply}
+ disabled={data.hasApplied || (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1)}
+ className={`px-12 py-4 rounded-full text-xl font-bold transition-colors ${data.hasApplied ? 'bg-green-600 text-white cursor-default' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'bg-gray-500 text-gray-200 cursor-not-allowed' : 'bg-white text-black hover:bg-gray-200'}`}>
+ {data.hasApplied ? 'Đã Ứng Tuyển' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'Đã Đủ Số Lượng' : 'Ứng Tuyển Ngay'}
+ </button>
  </div>
  </div>
  </div>
@@ -218,12 +217,12 @@ export const SocialLayout = ({ data }: { data: CampaignData }) => (
  ))}
  </div>
 
-  <button 
-  onClick={data.onApply}
-  disabled={data.hasApplied || !data.isVerified || (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1)}
-  className={`w-full text-white font-bold py-3 rounded-xl shadow-md transform transition-all ${data.hasApplied ? 'bg-green-500 cursor-default' : !data.isVerified ? 'bg-yellow-500 cursor-not-allowed' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-500 to-pink-500 active:scale-95'}`}>
-  {data.hasApplied ? 'Đã Ứng Tuyển' : !data.isVerified ? 'Cần Xác Minh' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'Đã Đủ Số Lượng' : 'Ứng Tuyển Ngay'}
-  </button>
+ <button 
+ onClick={data.onApply}
+ disabled={data.hasApplied || (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1)}
+ className={`w-full text-white font-bold py-3 rounded-xl shadow-md transform transition-all ${data.hasApplied ? 'bg-green-500 cursor-default' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-500 to-pink-500 active:scale-95'}`}>
+ {data.hasApplied ? 'Đã Ứng Tuyển' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'Đã Đủ Số Lượng' : 'Ứng Tuyển Ngay'}
+ </button>
  </div>
  </div>
 );
@@ -260,14 +259,14 @@ export const MinimalLayout = ({ data }: { data: CampaignData }) => (
  <p className="font-medium text-gray-900">{data.approvedApplicantCount || 0} / {data.targetApplicants || 1}</p>
  </div>
  
-  <div className="pt-6">
-  <button 
-  onClick={data.onApply}
-  disabled={data.hasApplied || !data.isVerified || (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1)}
-  className={`w-full py-4 text-sm tracking-widest uppercase font-bold transition-all ${data.hasApplied ? 'bg-green-600 text-white cursor-default' : !data.isVerified ? 'bg-yellow-500 text-white cursor-not-allowed' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-transparent text-black border border-black hover:bg-black hover:text-white'}`}>
-  {data.hasApplied ? 'Đã Ứng Tuyển' : !data.isVerified ? 'Cần Xác Minh' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'Đã Đủ Số Lượng' : 'Ứng Tuyển Ngay'}
-  </button>
-  </div>
+ <div className="pt-6">
+ <button 
+ onClick={data.onApply}
+ disabled={data.hasApplied || (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1)}
+ className={`w-full py-4 text-sm tracking-widest uppercase font-bold transition-all ${data.hasApplied ? 'bg-green-600 text-white cursor-default' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-transparent text-black border border-black hover:bg-black hover:text-white'}`}>
+ {data.hasApplied ? 'Đã Ứng Tuyển' : (data.approvedApplicantCount || 0) >= (data.targetApplicants || 1) ? 'Đã Đủ Số Lượng' : 'Ứng Tuyển Ngay'}
+ </button>
+ </div>
  </div>
  </div>
 

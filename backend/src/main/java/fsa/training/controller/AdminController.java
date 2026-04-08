@@ -1,9 +1,15 @@
 package fsa.training.controller;
 
-import fsa.training.dao.*;
-import fsa.training.entity.*;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import fsa.training.dao.CampaignDao;
+import fsa.training.dao.RoleDao;
+import fsa.training.dao.TransactionDao;
+import fsa.training.dao.UserDao;
+import fsa.training.dao.WalletDao;
+import fsa.training.entity.Campaign;
+import fsa.training.entity.Role;
+import fsa.training.entity.Transaction;
+import fsa.training.entity.User;
+import fsa.training.entity.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -41,40 +47,7 @@ public class AdminController {
     private WalletDao walletDao;
 
     @Autowired
-    private ApplicationDao applicationDao;
-
-    @Autowired
-    private JobDao jobDao;
-
-    @Autowired
-    private VerificationDao verificationDao;
-
-    @Autowired
-    private CampaignApplicationDao campaignApplicationDao;
-
-    @Autowired
-    private CampaignReceiverDao campaignReceiverDao;
-
-    @Autowired
-    private MilestoneDao milestoneDao;
-
-    @Autowired
-    private MilestoneHistoryDao milestoneHistoryDao;
-
-    @Autowired
-    private NotificationDao notificationDao;
-
-    @Autowired
-    private ReviewDao reviewDao;
-
-    @Autowired
-    private SupportTicketDao supportTicketDao;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> dashboard() {
@@ -105,31 +78,11 @@ public class AdminController {
 
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        try {
-            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
-            
-            entityManager.createNativeQuery("DELETE FROM milestone_history WHERE milestone_id IN (SELECT id FROM milestones WHERE job_id IN (SELECT id FROM jobs WHERE influencer_id = " + id + "))").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM milestones WHERE job_id IN (SELECT id FROM jobs WHERE influencer_id = " + id + ")").executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM jobs WHERE influencer_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM applications WHERE user_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM campaign_applications WHERE receiver_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM campaign_receivers WHERE receiver_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM campaigns WHERE creator_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM verification_requests WHERE user_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM support_tickets WHERE user_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM notifications WHERE user_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM reviews WHERE creator_id = " + id + " OR receiver_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM wallets WHERE user_id = " + id).executeUpdate();
-            entityManager.createNativeQuery("DELETE FROM users WHERE id = " + id).executeUpdate();
-            
-            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
-            
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            try { entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate(); } catch (Exception ex) {}
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body("Delete failed: " + e.getMessage());
+        if (!userDao.existsById(id)) {
+            return ResponseEntity.notFound().build();
         }
+        userDao.deleteById(id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/users")
