@@ -65,7 +65,23 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
         }
 
-        fsa.training.entity.User user = (fsa.training.entity.User) authentication.getPrincipal();
+        // Get email from authentication principal
+        String email = null;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User) {
+            email = ((org.springframework.security.oauth2.core.user.OAuth2User) principal).getAttribute("email");
+        } else if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+        } else {
+            email = authentication.getName();
+        }
+
+        // Fetch fresh user data from database
+        fsa.training.entity.User user = userDao.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(401).body(Map.of("message", "User not found"));
+        }
+
         Map<String, Object> roleMap = new HashMap<>();
         if (user.getRole() != null) {
             roleMap.put("id", user.getRole().getId());
