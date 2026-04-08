@@ -42,7 +42,10 @@ const AdminDashboard = () => {
  const [chartMode, setChartMode] = useState('7days'); // 7days, 30days, thisMonth, thisYear, custom
  const [customStartDate, setCustomStartDate] = useState('');
  const [customEndDate, setCustomEndDate] = useState('');
- const [chartData, setChartData] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+
+  const [commissionHistory, setCommissionHistory] = useState<any[]>([]);
+  const [loadingCommissionHistory, setLoadingCommissionHistory] = useState(false);
 
  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
  const [editingUser, setEditingUser] = useState<any>(null);
@@ -85,10 +88,11 @@ const AdminDashboard = () => {
  useEffect(() => {
  if (activeTab === 'verifications') {
  fetchVerificationRequests();
- } else if (activeTab === 'overview') {
- fetchStats();
- // fetchChartData() is handled by the other useEffect
- } else if (activeTab === 'users') {
+  } else if (activeTab === 'overview') {
+  fetchStats();
+  fetchCommissionHistory();
+  // fetchChartData() is handled by the other useEffect
+  } else if (activeTab === 'users') {
  fetchUsers();
  } else if (activeTab === 'campaigns') {
  fetchCampaigns();
@@ -135,15 +139,27 @@ const AdminDashboard = () => {
   };
 
   const fetchStats = async () => {
- try {
- const res = await api.get('/admin/statistics');
- setStats(res.data);
- } catch (e) {
- console.error("Failed to fetch stats", e);
- }
- };
+    try {
+      const res = await api.get('/admin/statistics');
+      setStats(res.data);
+    } catch (e) {
+      console.error("Failed to fetch stats", e);
+    }
+  };
 
- const fetchChartData = async () => {
+  const fetchCommissionHistory = async () => {
+    setLoadingCommissionHistory(true);
+    try {
+      const res = await api.get('/admin/commissions');
+      setCommissionHistory(res.data);
+    } catch (e) {
+      console.error("Failed to fetch commission history", e);
+    } finally {
+      setLoadingCommissionHistory(false);
+    }
+  };
+
+  const fetchChartData = async () => {
  try {
  let start = '';
  let end = '';
@@ -636,12 +652,62 @@ const AdminDashboard = () => {
  <Tooltip formatter={(value) => [`${Number(value).toLocaleString()} ₫`, 'Hoa Hồng']} cursor={{ fill: '#f3f4f6' }} />
  <Bar dataKey="commission" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={50} />
  </BarChart>
- </ResponsiveContainer>
- </div>
- </div>
- </div>
- </>
- )}
+  </ResponsiveContainer>
+  </div>
+  </div>
+  </div>
+
+  {/* Commission History Table */}
+  <div className="bg-white shadow rounded-lg overflow-hidden">
+  <div className="px-4 py-4 border-b border-gray-200">
+  <h3 className="text-lg font-bold text-gray-900">Lịch Sử Hoa Hồng</h3>
+  <p className="text-sm text-gray-500 mt-1">Danh sách các khoản hoa hồng đã thu được từ hệ thống.</p>
+  </div>
+  {loadingCommissionHistory ? (
+  <div className="flex justify-center p-8"><Loader2 className="animate-spin text-gray-400" /></div>
+  ) : commissionHistory.length === 0 ? (
+  <div className="p-8 text-center text-gray-500">Chưa có lịch sử hoa hồng.</div>
+  ) : (
+  <div className="overflow-x-auto">
+  <table className="min-w-full divide-y divide-gray-200">
+  <thead className="bg-gray-50">
+  <tr>
+  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
+  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người Nhận</th>
+  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chiến Dịch</th>
+  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại</th>
+  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Số Tiền</th>
+  </tr>
+  </thead>
+  <tbody className="bg-white divide-y divide-gray-200">
+  {commissionHistory.map((item: any, index: number) => (
+  <tr key={index} className="hover:bg-gray-50">
+  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+  {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : '-'}
+  </td>
+  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+  {item.user?.name || item.receiverName || '-'}
+  </td>
+  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+  {item.campaign?.title || item.campaignTitle || '-'}
+  </td>
+  <td className="px-6 py-4 whitespace-nowrap">
+  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.type === 'COMMISSION' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
+  {item.type === 'COMMISSION' ? 'Hoa hồng' : 'Khác'}
+  </span>
+  </td>
+  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+  {item.amount ? Number(item.amount).toLocaleString('vi-VN') + ' ₫' : '-'}
+  </td>
+  </tr>
+  ))}
+  </tbody>
+  </table>
+  </div>
+  )}
+  </div>
+  </>
+  )}
 
  {activeTab === 'users' && (
  <div className="bg-white shadow rounded-lg overflow-hidden">
