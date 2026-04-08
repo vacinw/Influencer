@@ -34,12 +34,10 @@ const RoleSelection = () => {
       await checkAuth();
       
       // Navigate based on selected role
-      // CREATOR = Nhãn hàng (Brand)
-      // RECEIVER = Nhà sáng tạo (Influencer)
-      if (roleName === 'RECEIVER') {
-        navigate('/receiver/dashboard');
-      } else {
+      if (roleName === 'CREATOR') {
         navigate('/creator/dashboard');
+      } else {
+        navigate('/receiver/dashboard');
       }
     } catch (error: any) {
       console.error('Error:', error);
@@ -67,14 +65,14 @@ const RoleSelection = () => {
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-3xl">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 px-4">
-          {/* Influencer Card - Nhà sáng tạo = RECEIVER */}
+          {/* Creator Card - Nhà sáng tạo = CREATOR */}
           <button
-            onClick={() => handleRoleSelect('RECEIVER')}
+            onClick={() => handleRoleSelect('CREATOR')}
             disabled={loading}
             className="relative group bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all border-2 border-gray-200 hover:border-indigo-300 text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center">
-              {loading && selectedRole === 'RECEIVER' ? (
+              {loading && selectedRole === 'CREATOR' ? (
                 <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
               ) : (
                 <span className="rounded-lg inline-flex p-3 bg-indigo-50 text-indigo-700 group-hover:bg-indigo-100 transition-colors">
@@ -92,14 +90,14 @@ const RoleSelection = () => {
             </div>
           </button>
 
-          {/* Brand Card - Nhãn hàng = CREATOR */}
+          {/* Receiver Card - Nhãn hàng = RECEIVER */}
           <button
-            onClick={() => handleRoleSelect('CREATOR')}
+            onClick={() => handleRoleSelect('RECEIVER')}
             disabled={loading}
             className="relative group bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all border-2 border-gray-200 hover:border-green-300 text-left disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center">
-              {loading && selectedRole === 'CREATOR' ? (
+              {loading && selectedRole === 'RECEIVER' ? (
                 <Loader2 className="h-8 w-8 animate-spin text-green-600" />
               ) : (
                 <span className="rounded-lg inline-flex p-3 bg-green-50 text-green-700 group-hover:bg-green-100 transition-colors">

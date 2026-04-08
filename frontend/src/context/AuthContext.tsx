@@ -48,18 +48,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Priority 0: Check if there's a token in the URL (from OAuth redirect)
       const urlParams = new URLSearchParams(window.location.search);
       const tokenFromUrl = urlParams.get('token');
-      console.log('checkAuth: URL token found:', tokenFromUrl ? 'yes' : 'no');
-      
       if (tokenFromUrl) {
         localStorage.setItem('token', tokenFromUrl);
-        console.log('checkAuth: token saved to localStorage');
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
       // Priority 1: Check if we have a token in localStorage
       let token = localStorage.getItem('token');
-      console.log('checkAuth: token from localStorage:', token ? 'yes' : 'no');
 
       // Priority 2: Try to exchange cookie for token (if fresh login from OAuth)
       if (!token) {
@@ -75,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (token) {
-        console.log('checkAuth: fetching /auth/me with token:', token.substring(0, 20) + '...');
+        console.log('checkAuth: fetching /auth/me with token');
         const response = await api.get('/auth/me');
         console.log('checkAuth: response from /auth/me', response.data);
         if (response.status === 200) {
@@ -89,16 +85,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           throw new Error("Invalid token");
         }
       } else {
-        console.log('checkAuth: no token found');
         setState({
           user: null,
           isAuthenticated: false,
           isLoading: false,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('checkAuth error:', error);
-      console.error('checkAuth error status:', error.response?.status);
       localStorage.removeItem('token');
       setState({
         user: null,

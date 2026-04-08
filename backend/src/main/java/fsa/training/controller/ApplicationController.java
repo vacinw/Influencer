@@ -63,11 +63,6 @@ public class ApplicationController {
             return ResponseEntity.status(401).body("Unauthorized");
         }
 
-        // Check if user is verified
-        if (user.getVerified() == null || !user.getVerified()) {
-            return ResponseEntity.badRequest().body("Bạn cần xác minh tài khoản trước khi ứng tuyển. Vui lòng vào trang Xác minh để hoàn tất.");
-        }
-
         try {
             Long campaignId = Long.valueOf(payload.get("campaignId").toString());
             String message = (String) payload.get("message");
