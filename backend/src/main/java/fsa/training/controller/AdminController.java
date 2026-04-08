@@ -115,56 +115,55 @@ public class AdminController {
             Long walletId = walletDao.findByUser(user).map(w -> w.getId()).orElse(null);
 
             // Use native SQL to delete all references to user
-            // Disable foreign key checks, delete, then re-enable
             String[] sqls = {
-                // Delete milestone histories for user's jobs
                 "DELETE FROM milestone_history WHERE milestone_id IN (SELECT m.id FROM milestones m JOIN jobs j ON m.job_id = j.id WHERE j.influencer_id = " + id + ")",
-                // Delete milestones for user's jobs
                 "DELETE FROM milestones WHERE job_id IN (SELECT id FROM jobs WHERE influencer_id = " + id + ")",
-                // Delete jobs where user is influencer
                 "DELETE FROM jobs WHERE influencer_id = " + id,
-                // Delete applications where user is receiver
                 "DELETE FROM applications WHERE user_id = " + id,
-                // Delete campaign_applications where user is receiver
                 "DELETE FROM campaign_applications WHERE receiver_id = " + id,
-                // Delete campaign_receivers where user is receiver
                 "DELETE FROM campaign_receivers WHERE receiver_id = " + id,
-                // Delete campaigns where user is creator (cascades to applications, jobs)
                 "DELETE FROM campaigns WHERE creator_id = " + id,
-                // Delete verification_requests where user is user
                 "DELETE FROM verification_requests WHERE user_id = " + id,
-                // Delete support_tickets where user is user
                 "DELETE FROM support_tickets WHERE user_id = " + id,
-                // Delete notifications where user is user
                 "DELETE FROM notifications WHERE user_id = " + id,
-                // Delete reviews where user is creator or receiver
                 "DELETE FROM reviews WHERE creator_id = " + id + " OR receiver_id = " + id,
-                // Delete social links
                 "DELETE FROM user_social_links WHERE user_id = " + id,
             };
 
             for (String sql : sqls) {
                 try {
-                    entityManager.createNativeQuery(sql).executeUpdate();
+                    int deleted = entityManager.createNativeQuery(sql).executeUpdate();
+                    System.out.println("Executed: " + sql.substring(0, 30) + "... deleted: " + deleted);
                 } catch (Exception e) {
-                    // Ignore individual errors, continue with other deletes
-                    System.out.println("SQL warning: " + e.getMessage());
+                    System.out.println("SQL error for: " + sql.substring(0, 30) + "... - " + e.getMessage());
                 }
             }
 
             // Delete transactions and wallet
             if (walletId != null) {
-                entityManager.createNativeQuery("DELETE FROM transactions WHERE wallet_id = " + walletId).executeUpdate();
-                entityManager.createNativeQuery("DELETE FROM wallets WHERE id = " + walletId).executeUpdate();
+                try {
+                    entityManager.createNativeQuery("DELETE FROM transactions WHERE wallet_id = " + walletId).executeUpdate();
+                    entityManager.createNativeQuery("DELETE FROM wallets WHERE id = " + walletId).executeUpdate();
+                } catch (Exception e) {
+                    System.out.println("Wallet delete error: " + e.getMessage());
+                }
             }
 
             // Delete user
-            entityManager.createNativeQuery("DELETE FROM users WHERE id = " + id).executeUpdate();
+            int deletedUser = entityManager.createNativeQuery("DELETE FROM users WHERE id = " + id).executeUpdate();
+            System.out.println("User deleted: " + deletedUser);
 
-            return ResponseEntity.ok().build();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "User deleted successfully");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().body("Cannot delete user: " + e.getMessage());
+            String errorMsg = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Cannot delete user");
+            errorResponse.put("details", errorMsg);
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
