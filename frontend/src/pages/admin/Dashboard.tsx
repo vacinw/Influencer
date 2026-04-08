@@ -1,5 +1,5 @@
 import { Users, ShoppingBag, DollarSign, ShieldCheck, Check, X, ExternalLink, Loader2, UserX, UserCheck, Edit2, Trash2, Plus, Wallet } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../../services/api';
 
@@ -70,7 +70,9 @@ const AdminDashboard = () => {
  const [bannerTypeFilter, setBannerTypeFilter] = useState('ALL');
  const [bannerStatusFilter, setBannerStatusFilter] = useState('ALL');
  const [verificationSearchText, setVerificationSearchText] = useState('');
- const [verificationStatusFilter, setVerificationStatusFilter] = useState('PENDING');
+  const [verificationStatusFilter, setVerificationStatusFilter] = useState('PENDING');
+
+  const isProcessingRef = useRef(false);
 
  useEffect(() => {
  if (activeTab === 'overview') {
@@ -371,62 +373,74 @@ const AdminDashboard = () => {
  }
  };
 
- const handleApprove = async (id: number) => {
- setProcessingId(id);
- try {
- await api.post(`/verification/${id}/approve`);
- setVerificationRequests(prev => prev.filter(req => req.id !== id));
- } catch (error) {
- console.error("Failed to approve", error);
- } finally {
- setProcessingId(null);
- }
- };
+  const handleApprove = async (id: number) => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    setProcessingId(id);
+    try {
+      await api.post(`/verification/${id}/approve`);
+      setVerificationRequests(prev => prev.filter(req => req.id !== id));
+    } catch (error) {
+      console.error("Failed to approve", error);
+    } finally {
+      setProcessingId(null);
+      isProcessingRef.current = false;
+    }
+  };
 
- const handleReject = async (id: number) => {
- const note = prompt("Lý do từ chối:");
- if (!note) return;
+  const handleReject = async (id: number) => {
+    if (isProcessingRef.current) return;
+    const note = prompt("Lý do từ chối:");
+    if (!note) return;
 
- setProcessingId(id);
- try {
- await api.post(`/verification/${id}/reject`, { note });
- setVerificationRequests(prev => prev.filter(req => req.id !== id));
- } catch (error) {
- console.error("Failed to reject", error);
- } finally {
- setProcessingId(null);
- }
- };
+    isProcessingRef.current = true;
+    setProcessingId(id);
+    try {
+      await api.post(`/verification/${id}/reject`, { note });
+      setVerificationRequests(prev => prev.filter(req => req.id !== id));
+    } catch (error) {
+      console.error("Failed to reject", error);
+    } finally {
+      setProcessingId(null);
+      isProcessingRef.current = false;
+    }
+  };
 
- const handleApproveWithdrawal = async (id: number) => {
- if (!window.confirm("Xác nhận ĐÃ chuyển khoản thành công?")) return;
- setProcessingId(id);
- try {
- await api.put(`/admin/withdrawals/${id}/approve`);
- setWithdrawals(prev => prev.filter(w => w.id !== id));
- alert("Đã duyệt yêu cầu rút tiền thành công!");
- } catch (error) {
- console.error("Failed to approve withdrawal", error);
- alert("Có lỗi xảy ra khi duyệt");
- } finally {
- setProcessingId(null);
- }
- };
+  const handleApproveWithdrawal = async (id: number) => {
+    if (isProcessingRef.current) return;
+    if (!window.confirm("Xác nhận ĐÃ chuyển khoản thành công?")) return;
+    isProcessingRef.current = true;
+    setProcessingId(id);
+    try {
+      await api.put(`/admin/withdrawals/${id}/approve`);
+      setWithdrawals(prev => prev.filter(w => w.id !== id));
+      alert("Đã duyệt yêu cầu rút tiền thành công!");
+    } catch (error) {
+      console.error("Failed to approve withdrawal", error);
+      alert("Có lỗi xảy ra khi duyệt");
+    } finally {
+      setProcessingId(null);
+      isProcessingRef.current = false;
+    }
+  };
 
- const handleRejectWithdrawal = async (id: number) => {
- if (!window.confirm("Bạn có chắc chắn muốn TỪ CHỐI và HOÀN TIỀN yêu cầu này?")) return;
- setProcessingId(id);
- try {
- await api.put(`/admin/withdrawals/${id}/reject`);
- setWithdrawals(prev => prev.filter(w => w.id !== id));
- alert("Đã từ chối và hoàn tiền thành công!");
- } catch (error) {
- console.error("Failed to reject withdrawal", error);
- alert("Có lỗi xảy ra khi từ chối");
- } finally {
- setProcessingId(null);
- }
- };
+  const handleRejectWithdrawal = async (id: number) => {
+    if (isProcessingRef.current) return;
+    if (!window.confirm("Bạn có chắc chắn muốn TỪ CHỐI và HOÀN TIỀN yêu cầu này?")) return;
+    isProcessingRef.current = true;
+    setProcessingId(id);
+    try {
+      await api.put(`/admin/withdrawals/${id}/reject`);
+      setWithdrawals(prev => prev.filter(w => w.id !== id));
+      alert("Đã từ chối và hoàn tiền thành công!");
+    } catch (error) {
+      console.error("Failed to reject withdrawal", error);
+      alert("Có lỗi xảy ra khi từ chối");
+    } finally {
+      setProcessingId(null);
+      isProcessingRef.current = false;
+    }
+  };
 
  return (
  <div className="space-y-6">

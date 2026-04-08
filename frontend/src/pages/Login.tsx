@@ -1,27 +1,22 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
-import { Mail, Lock, Chrome, Apple, Facebook, Sparkles, Loader2 } from 'lucide-react';
+import { Mail, Lock, Chrome, Apple, Facebook, Sparkles } from 'lucide-react';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const isSubmittingRef = useRef(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
+ const [email, setEmail] = useState('');
+ const [password, setPassword] = useState('');
+ const [error, setError] = useState('');
+ const { login } = useAuth();
+ const navigate = useNavigate();
 
-  const GOOGLE_OAUTH_URL = `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8080'}/oauth2/authorization/google`;
+ const GOOGLE_OAUTH_URL = `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8080'}/oauth2/authorization/google`;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmittingRef.current) return;
-    isSubmittingRef.current = true;
-    setIsSubmitting(true);
-    setError('');
-    try {
+ const handleSubmit = async (e: React.FormEvent) => {
+ e.preventDefault();
+ setError('');
+ try {
  const formData = new FormData();
  formData.append('username', email);
  formData.append('password', password);
@@ -86,13 +81,10 @@ const Login = () => {
  }
  }
  }
-  } catch (err: any) {
-    setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
-  } finally {
-    isSubmittingRef.current = false;
-    setIsSubmitting(false);
-  }
-  };
+ } catch (err: any) {
+ setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+ }
+ };
 
  return (
  <div className="min-h-screen flex bg-white">
@@ -168,14 +160,12 @@ const Login = () => {
  <Link to="/forgot-password" className="font-medium text-gray-600 hover:text-gray-900">Quên Mật khẩu?</Link>
  </div>
 
-  <button
-  type="submit"
-  disabled={isSubmitting}
-  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-  >
-  {isSubmitting && <Loader2 className="animate-spin w-4 h-4 mr-2" />}
-  Tiếp tục
-  </button>
+ <button
+ type="submit"
+ className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors"
+ >
+ Tiếp tục
+ </button>
 
  <div className="relative my-6">
  <div className="absolute inset-0 flex items-center">

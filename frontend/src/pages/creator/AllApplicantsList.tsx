@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { Loader2, ArrowLeft, CheckCircle, XCircle, MessageSquare, Briefcase } from 'lucide-react';
@@ -8,7 +8,8 @@ const AllApplicantsList = () => {
  const navigate = useNavigate();
  const { showToast } = useToast();
  const [applicants, setApplicants] = useState<any[]>([]);
- const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const isProcessingRef = useRef(false);
 
  useEffect(() => {
  const fetchData = async () => {
@@ -26,18 +27,22 @@ const AllApplicantsList = () => {
  fetchData();
  }, [showToast]);
 
- const handleUpdateStatus = async (appId: number, newStatus: string) => {
- try {
- await api.put(`/application/${appId}/status`, { status: newStatus });
- setApplicants(prev => prev.map(app =>
- app.id === appId ? { ...app, status: newStatus } : app
- ));
- showToast(`Cập nhật trạng thái thành công!`, "success");
- } catch (error) {
- console.error("Failed to update status", error);
- showToast("Cập nhật trạng thái thất bại", "error");
- }
- };
+  const handleUpdateStatus = async (appId: number, newStatus: string) => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    try {
+      await api.put(`/application/${appId}/status`, { status: newStatus });
+      setApplicants(prev => prev.map(app =>
+        app.id === appId ? { ...app, status: newStatus } : app
+      ));
+      showToast(`Cập nhật trạng thái thành công!`, "success");
+    } catch (error) {
+      console.error("Failed to update status", error);
+      showToast("Cập nhật trạng thái thất bại", "error");
+    } finally {
+      isProcessingRef.current = false;
+    }
+  };
 
  if (loading) {
  return (

@@ -1,37 +1,32 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { Mail, Lock, User, Briefcase, Chrome, Apple, Facebook, ChevronDown, Sparkles, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, Chrome, Apple, Facebook, ChevronDown, Sparkles } from 'lucide-react';
 
 const Register = () => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    roleName: 'CREATOR'
-  });
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const isSubmittingRef = useRef(false);
-  const navigate = useNavigate();
+ const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+ const [formData, setFormData] = useState({
+ name: '',
+ email: '',
+ password: '',
+ roleName: 'CREATOR' // Default role
+ });
+ const [error, setError] = useState('');
+ const navigate = useNavigate();
 
-  const GOOGLE_OAUTH_URL = `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8080'}/oauth2/authorization/google`;
+ const GOOGLE_OAUTH_URL = `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8080'}/oauth2/authorization/google`;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
+ const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+ setFormData({
+ ...formData,
+ [e.target.name]: e.target.value
+ });
+ };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmittingRef.current) return;
-    isSubmittingRef.current = true;
-    setIsSubmitting(true);
-    setError('');
-    try {
+ const handleSubmit = async (e: React.FormEvent) => {
+ e.preventDefault();
+ setError('');
+ try {
  const payload = {
  name: formData.name,
  email: formData.email,
@@ -42,13 +37,10 @@ const Register = () => {
  };
  await api.post('/register', payload);
  navigate('/login');
-  } catch (err: any) {
-    setError(typeof err.response?.data === 'string' ? err.response.data : 'Đăng ký thất bại.');
-  } finally {
-    isSubmittingRef.current = false;
-    setIsSubmitting(false);
-  }
-  };
+ } catch (err: any) {
+ setError(typeof err.response?.data === 'string' ? err.response.data : 'Đăng ký thất bại.');
+ }
+ };
 
  return (
  <div className="min-h-screen flex bg-white">
@@ -183,14 +175,12 @@ const Register = () => {
 
  {error && <div className="text-red-500 text-sm text-center">{error}</div>}
 
-  <button
-  type="submit"
-  disabled={isSubmitting}
-  className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-  >
-  {isSubmitting && <Loader2 className="animate-spin w-4 h-4 mr-2" />}
-  Tạo tài khoản
-  </button>
+ <button
+ type="submit"
+ className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition-colors"
+ >
+ Tạo tài khoản
+ </button>
 
  <div className="relative my-6">
  <div className="absolute inset-0 flex items-center">

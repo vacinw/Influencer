@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -29,11 +29,12 @@ const VerificationCard = ({
  ? 'Xác minh danh tính của bạn tức thì bằng AI.'
  : 'Xác minh tư cách pháp nhân doanh nghiệp (Duyệt thủ công).';
 
- // Local state for each card
- const [localUrl, setLocalUrl] = useState('');
- const [localUploading, setLocalUploading] = useState(false);
- const [localSubmitting, setLocalSubmitting] = useState(false);
- const [localMode, setLocalMode] = useState<'upload' | 'link'>('upload');
+  // Local state for each card
+  const [localUrl, setLocalUrl] = useState('');
+  const [localUploading, setLocalUploading] = useState(false);
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+  const [localMode, setLocalMode] = useState<'upload' | 'link'>('upload');
+  const isProcessingRef = useRef(false);
 
  const status = request?.status;
 
@@ -59,24 +60,25 @@ const VerificationCard = ({
  }
  };
 
- const handleSubmit = async () => {
- if (!localUrl) return;
-
- setLocalSubmitting(true);
- try {
- await api.post('/verification/request', {
- documentType: type,
- documentUrl: localUrl
- });
- setLocalUrl('');
- await onRefresh();
- window.location.reload();
- } catch (error: any) {
- alert(error.response?.data || "Gửi yêu cầu thất bại");
- } finally {
- setLocalSubmitting(false);
- }
- };
+  const handleSubmit = async () => {
+    if (isProcessingRef.current || !localUrl) return;
+    isProcessingRef.current = true;
+    setLocalSubmitting(true);
+    try {
+      await api.post('/verification/request', {
+        documentType: type,
+        documentUrl: localUrl
+      });
+      setLocalUrl('');
+      await onRefresh();
+      window.location.reload();
+    } catch (error: any) {
+      alert(error.response?.data || "Gửi yêu cầu thất bại");
+    } finally {
+      setLocalSubmitting(false);
+      isProcessingRef.current = false;
+    }
+  };
 
  if (status === 'APPROVED') {
  return (

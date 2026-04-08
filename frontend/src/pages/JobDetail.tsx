@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, XCircle, ExternalLink, Loader2, Send, Plus, Flag, AlertCircle, Briefcase, Star } from 'lucide-react';
 import api from '../services/api';
@@ -34,7 +34,9 @@ const JobDetail = () => {
  // Review States
  const [reviewModal, setReviewModal] = useState<{ isOpen: boolean, receiverId: number | null }>({ isOpen: false, receiverId: null });
  const [reviewFormData, setReviewFormData] = useState({ rating: 0, content: '' });
- const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const isProcessingRef = useRef(false);
 
  const fetchJob = async () => {
  setLoading(true);
@@ -61,100 +63,119 @@ const JobDetail = () => {
  }
  }, [id, user]);
 
- const handleAddMilestone = async () => {
- if (!newMilestone.title) return;
- try {
- await api.post(`/job/${id}/milestone`, newMilestone);
- setShowAddMilestone(false);
- setNewMilestone({ title: '', description: '', deadline: '' });
- fetchJob();
- } catch (error) {
- console.error("Failed to add milestone", error);
- }
- };
+  const handleAddMilestone = async () => {
+    if (isProcessingRef.current || !newMilestone.title) return;
+    isProcessingRef.current = true;
+    try {
+      await api.post(`/job/${id}/milestone`, newMilestone);
+      setShowAddMilestone(false);
+      setNewMilestone({ title: '', description: '', deadline: '' });
+      fetchJob();
+    } catch (error) {
+      console.error("Failed to add milestone", error);
+    } finally {
+      isProcessingRef.current = false;
+    }
+  };
 
  const handleCompleteJob = () => {
  setShowCompleteModal(true);
  };
 
- const confirmCompleteJob = async () => {
- try {
- await api.post(`/job/${id}/complete`, {});
- setShowCompleteModal(false);
- fetchJob();
- } catch (error) {
- console.error("Failed to complete job", error);
- }
- };
+  const confirmCompleteJob = async () => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    try {
+      await api.post(`/job/${id}/complete`, {});
+      setShowCompleteModal(false);
+      fetchJob();
+    } catch (error) {
+      console.error("Failed to complete job", error);
+    } finally {
+      isProcessingRef.current = false;
+    }
+  };
 
- const handleSubmit = async (milestoneId: number) => {
- if (!evidenceUrl) return;
- setSubmitting(milestoneId);
- try {
- await api.post(`/job/${id}/milestone/${milestoneId}/submit`, {
- evidenceUrl,
- description: submissionDesc
- });
- fetchJob();
- setEvidenceUrl('');
- setSubmissionDesc('');
- setSubmitting(null);
- } catch (error) {
- console.error("Failed to submit", error);
- setSubmitting(null);
- }
- };
+  const handleSubmit = async (milestoneId: number) => {
+    if (isProcessingRef.current || !evidenceUrl) return;
+    isProcessingRef.current = true;
+    setSubmitting(milestoneId);
+    try {
+      await api.post(`/job/${id}/milestone/${milestoneId}/submit`, {
+        evidenceUrl,
+        description: submissionDesc
+      });
+      fetchJob();
+      setEvidenceUrl('');
+      setSubmissionDesc('');
+      setSubmitting(null);
+    } catch (error) {
+      console.error("Failed to submit", error);
+      setSubmitting(null);
+    } finally {
+      isProcessingRef.current = false;
+    }
+  };
 
- const handleApprove = async (milestoneId: number) => {
- try {
- await api.post(`/job/${id}/milestone/${milestoneId}/review`, { status: 'APPROVED' });
- fetchJob();
- } catch (error) {
- console.error("Failed to approve", error);
- }
- };
+  const handleApprove = async (milestoneId: number) => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    try {
+      await api.post(`/job/${id}/milestone/${milestoneId}/review`, { status: 'APPROVED' });
+      fetchJob();
+    } catch (error) {
+      console.error("Failed to approve", error);
+    } finally {
+      isProcessingRef.current = false;
+    }
+  };
 
- const handleReject = async () => {
- if (!rejectingId || !rejectFeedback) return;
- try {
- await api.post(`/job/${id}/milestone/${rejectingId}/review`, {
- status: 'REJECTED',
- feedback: rejectFeedback
- });
- setRejectingId(null);
- setRejectFeedback('');
- fetchJob();
- } catch (error) {
- console.error("Failed to reject", error);
- }
- };
+  const handleReject = async () => {
+    if (isProcessingRef.current || !rejectingId || !rejectFeedback) return;
+    isProcessingRef.current = true;
+    try {
+      await api.post(`/job/${id}/milestone/${rejectingId}/review`, {
+        status: 'REJECTED',
+        feedback: rejectFeedback
+      });
+      setRejectingId(null);
+      setRejectFeedback('');
+      fetchJob();
+    } catch (error) {
+      console.error("Failed to reject", error);
+    } finally {
+      isProcessingRef.current = false;
+    }
+  };
 
  const handleRating = (rate: number) => {
  setReviewFormData(prev => ({ ...prev, rating: rate }));
  };
 
- const submitReview = async () => {
- if (reviewFormData.rating === 0) {
- showToast("Vui lòng chọn số sao để đánh giá", "error");
- return;
- }
- setIsSubmittingReview(true);
- try {
- await api.post('/reviews/create', {
- receiverId: reviewModal.receiverId,
- campaignId: job.campaign.id,
- rating: reviewFormData.rating,
- content: reviewFormData.content
- });
- showToast("Gửi đánh giá thành công!", "success");
- setReviewModal({ isOpen: false, receiverId: null });
- setReviewFormData({ rating: 0, content: '' });
- } catch (error: any) {
- showToast(error.response?.data || "Gửi đánh giá thất bại", "error");
- } finally {
- setIsSubmittingReview(false);
- }
- };
+  const submitReview = async () => {
+    if (isProcessingRef.current || reviewFormData.rating === 0) {
+      if (reviewFormData.rating === 0) showToast("Vui lòng chọn số sao để đánh giá", "error");
+      return;
+    }
+    isProcessingRef.current = true;
+    setIsSubmittingReview(true);
+    try {
+      await api.post('/reviews/create', {
+        receiverId: reviewModal.receiverId,
+        campaignId: job.campaign.id,
+        rating: reviewFormData.rating,
+        content: reviewFormData.content
+      });
+      showToast("Gửi đánh giá thành công!", "success");
+      setReviewModal({ isOpen: false, receiverId: null });
+      setReviewFormData({ rating: 0, content: '' });
+    } catch (error: any) {
+      showToast(error.response?.data || "Gửi đánh giá thất bại", "error");
+    } finally {
+      setIsSubmittingReview(false);
+      isProcessingRef.current = false;
+    }
+  };
 
  const renderSingleEvidence = (url: string, index: number) => {
  const containerClass = "mx-auto overflow-hidden rounded-lg shadow-sm border border-gray-200 mt-2";
