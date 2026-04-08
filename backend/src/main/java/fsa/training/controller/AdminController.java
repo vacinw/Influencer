@@ -51,6 +51,12 @@ public class AdminController {
     private CampaignApplicationDao campaignApplicationDao;
 
     @Autowired
+    private MilestoneDao milestoneDao;
+
+    @Autowired
+    private MilestoneHistoryDao milestoneHistoryDao;
+
+    @Autowired
     private NotificationDao notificationDao;
 
     @Autowired
@@ -131,10 +137,18 @@ public class AdminController {
             System.out.println("Deleting " + applications.size() + " applications");
             applicationDao.deleteAll(applications);
 
-            // Delete jobs where user is influencer (milestones and history will cascade)
+            // Delete jobs where user is influencer - delete milestones and history first
             List<Job> jobs = jobDao.findByInfluencer(user);
-            System.out.println("Deleting " + jobs.size() + " jobs");
+            System.out.println("Deleting " + jobs.size() + " jobs with milestones");
             for (Job job : jobs) {
+                // Delete milestone history first
+                List<Milestone> milestones = milestoneDao.findByJob(job);
+                for (Milestone milestone : milestones) {
+                    milestoneHistoryDao.deleteAll(milestoneHistoryDao.findByMilestone_IdOrderByCreatedAtDesc(milestone.getId()));
+                }
+                // Delete milestones
+                milestoneDao.deleteAll(milestones);
+                // Delete job
                 jobDao.delete(job);
             }
 
