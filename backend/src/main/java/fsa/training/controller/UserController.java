@@ -51,6 +51,7 @@ public class UserController {
         }
 
         String roleName = payload.get("role");
+        System.out.println("Update role request: email=" + email + ", role=" + roleName);
         if (roleName == null || (!roleName.equals("CREATOR") && !roleName.equals("RECEIVER"))) {
             return ResponseEntity.badRequest().body("Invalid role. Must be CREATOR or RECEIVER");
         }
@@ -67,6 +68,10 @@ public class UserController {
 
         user.setRole(role);
         userDao.save(user);
+        
+        // Fetch fresh user to return
+        user = userDao.findByEmail(email);
+        System.out.println("User role after update: " + (user.getRole() != null ? user.getRole().getName() : "null"));
 
         return ResponseEntity.ok(user);
     }

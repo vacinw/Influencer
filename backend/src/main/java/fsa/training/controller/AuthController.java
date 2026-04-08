@@ -76,11 +76,15 @@ public class AuthController {
             email = authentication.getName();
         }
 
+        System.out.println("/auth/me called for email: " + email);
+
         // Fetch fresh user data from database
         fsa.training.entity.User user = userDao.findByEmail(email);
         if (user == null) {
             return ResponseEntity.status(401).body(Map.of("message", "User not found"));
         }
+
+        System.out.println("User role from DB: " + (user.getRole() != null ? user.getRole().getName() : "null"));
 
         Map<String, Object> roleMap = new HashMap<>();
         if (user.getRole() != null) {

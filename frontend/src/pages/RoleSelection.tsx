@@ -21,9 +21,12 @@ const RoleSelection = () => {
   const handleRoleSelect = async (roleName: string) => {
     setLoading(true);
     try {
-      await api.post('/users/role', { role: roleName });
+      console.log('Selecting role:', roleName);
+      const response = await api.post('/users/role', { role: roleName });
+      console.log('Role update response:', response.data);
       // After role update, refresh auth state
       await checkAuth();
+      console.log('Auth checked, current user role:', currentUser?.role?.name);
       // Navigate based on selected role
       if (roleName === 'CREATOR') {
         navigate('/creator/dashboard');

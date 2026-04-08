@@ -43,60 +43,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
  }
  };
 
- const checkAuth = async () => {
- try {
- // Priority 0: Check if there's a token in the URL (from OAuth redirect)
- const urlParams = new URLSearchParams(window.location.search);
- const tokenFromUrl = urlParams.get('token');
- if (tokenFromUrl) {
- localStorage.setItem('token', tokenFromUrl);
- // Clean up URL
- window.history.replaceState({}, document.title, window.location.pathname);
- }
+  const checkAuth = async () => {
+    try {
+      // Priority 0: Check if there's a token in the URL (from OAuth redirect)
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenFromUrl = urlParams.get('token');
+      if (tokenFromUrl) {
+        localStorage.setItem('token', tokenFromUrl);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
 
- // Priority 1: Check if we have a token in localStorage
- let token = localStorage.getItem('token');
+      // Priority 1: Check if we have a token in localStorage
+      let token = localStorage.getItem('token');
 
- // Priority 2: Try to exchange cookie for token (if fresh login from OAuth)
- if (!token) {
- try {
- const tokenResp = await api.get('/auth/token');
- if (tokenResp.status === 200 && tokenResp.data.token) {
- token = tokenResp.data.token;
- localStorage.setItem('token', token!);
- }
- } catch (e) {
- // No cookie or invalid
- }
- }
+      // Priority 2: Try to exchange cookie for token (if fresh login from OAuth)
+      if (!token) {
+        try {
+          const tokenResp = await api.get('/auth/token');
+          if (tokenResp.status === 200 && tokenResp.data.token) {
+            token = tokenResp.data.token;
+            localStorage.setItem('token', token!);
+          }
+        } catch (e) {
+          // No cookie or invalid
+        }
+      }
 
- if (token) {
- const response = await api.get('/auth/me');
- if (response.status === 200) {
- setState({
- user: response.data,
- isAuthenticated: true,
- isLoading: false,
- });
- } else {
- throw new Error("Invalid token");
- }
- } else {
- setState({
- user: null,
- isAuthenticated: false,
- isLoading: false,
- });
- }
- } catch (error) {
- localStorage.removeItem('token');
- setState({
- user: null,
- isAuthenticated: false,
- isLoading: false,
- });
- }
- };
+      if (token) {
+        console.log('checkAuth: fetching /auth/me with token');
+        const response = await api.get('/auth/me');
+        console.log('checkAuth: response from /auth/me', response.data);
+        if (response.status === 200) {
+          setState({
+            user: response.data,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+          console.log('checkAuth: user role set to', response.data.role?.name);
+        } else {
+          throw new Error("Invalid token");
+        }
+      } else {
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+      }
+    } catch (error) {
+      console.error('checkAuth error:', error);
+      localStorage.removeItem('token');
+      setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    }
+  };
 
  useEffect(() => {
  checkAuth();
