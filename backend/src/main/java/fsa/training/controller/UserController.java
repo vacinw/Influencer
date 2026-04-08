@@ -51,19 +51,23 @@ public class UserController {
         }
 
         String roleName = payload.get("role");
-        System.out.println("Update role request: email=" + email + ", role=" + roleName);
+        System.out.println("=== ROLE UPDATE DEBUG ===");
+        System.out.println("Email from auth: " + email);
+        System.out.println("Role from payload: " + roleName);
+        System.out.println("Current user in DB before update: " + (user.getRole() != null ? user.getRole().getName() : "NULL"));
+        
         if (roleName == null || (!roleName.equals("CREATOR") && !roleName.equals("RECEIVER"))) {
             return ResponseEntity.badRequest().body("Invalid role. Must be CREATOR or RECEIVER");
         }
 
         Role role = roleDao.findByName(roleName);
+        System.out.println("Role entity found: " + (role != null ? role.getName() + " (id=" + role.getId() + ")" : "NULL"));
+        
         if (role == null) {
-            // Should create role if not exists? Ideally roles are seeded.
-            // But for simple path, let's assume roles exist or create on fly?
-            // Better to return error if not seeded, but to be safe lets create:
             role = new Role();
             role.setName(roleName);
-            roleDao.save(role);
+            role = roleDao.save(role);
+            System.out.println("Created new role: " + roleName);
         }
 
         user.setRole(role);
