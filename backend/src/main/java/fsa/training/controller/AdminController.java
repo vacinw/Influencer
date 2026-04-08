@@ -104,90 +104,29 @@ public class AdminController {
     }
 
     @DeleteMapping("/users/{id}")
-    @Transactional
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         try {
-            // Delete in correct order using JPA
-            // 1. Delete user's jobs' milestones and milestone history
-            List<Job> userJobs = jobDao.findAll().stream()
-                .filter(j -> j.getInfluencer() != null && j.getInfluencer().getId().equals(id))
-                .toList();
-            for (Job job : userJobs) {
-                for (Milestone ms : job.getMilestones()) {
-                    if (ms.getHistory() != null) {
-                        milestoneHistoryDao.deleteAll(ms.getHistory());
-                    }
-                }
-                milestoneDao.deleteAll(job.getMilestones());
-            }
-            jobDao.deleteAll(userJobs);
-
-            // 2. Delete applications
-            List<Application> apps = applicationDao.findAll().stream()
-                .filter(a -> a.getReceiver() != null && a.getReceiver().getId().equals(id))
-                .toList();
-            applicationDao.deleteAll(apps);
-
-            // 3. Delete campaign applications
-            List<CampaignApplication> campApps = campaignApplicationDao.findAll().stream()
-                .filter(ca -> ca.getReceiver() != null && ca.getReceiver().getId().equals(id))
-                .toList();
-            campaignApplicationDao.deleteAll(campApps);
-
-            // 4. Delete campaign receivers
-            List<CampaignReceiver> campRecs = campaignReceiverDao.findAll().stream()
-                .filter(cr -> cr.getReceiver() != null && cr.getReceiver().getId().equals(id))
-                .toList();
-            campaignReceiverDao.deleteAll(campRecs);
-
-            // 5. Delete campaigns (creator's campaigns)
-            List<Campaign> campaigns = campaignDao.findAll().stream()
-                .filter(c -> c.getCreator() != null && c.getCreator().getId().equals(id))
-                .toList();
-            for (Campaign camp : campaigns) {
-                // Clear references before delete
-                camp.setCreator(null);
-                campaignDao.save(camp);
-            }
-            campaignDao.deleteAll(campaigns);
-
-            // 6. Delete verification requests
-            List<VerificationRequest> verifs = verificationDao.findAll().stream()
-                .filter(v -> v.getUser() != null && v.getUser().getId().equals(id))
-                .toList();
-            verificationDao.deleteAll(verifs);
-
-            // 7. Delete support tickets
-            List<SupportTicket> tickets = supportTicketDao.findAll().stream()
-                .filter(t -> t.getUser() != null && t.getUser().getId().equals(id))
-                .toList();
-            supportTicketDao.deleteAll(tickets);
-
-            // 8. Delete notifications
-            List<Notification> notifs = notificationDao.findAll().stream()
-                .filter(n -> n.getUser() != null && n.getUser().getId().equals(id))
-                .toList();
-            notificationDao.deleteAll(notifs);
-
-            // 9. Delete reviews
-            List<Review> reviews = reviewDao.findAll().stream()
-                .filter(r -> (r.getCreator() != null && r.getCreator().getId().equals(id)) ||
-                            (r.getReceiver() != null && r.getReceiver().getId().equals(id)))
-                .toList();
-            reviewDao.deleteAll(reviews);
-
-            // 10. Delete wallet and transactions
-            walletDao.findByUser(userDao.findById(id).orElse(null)).ifPresent(wallet -> {
-                List<Transaction> txns = transactionDao.findByWalletOrderByCreatedAtDesc(wallet);
-                transactionDao.deleteAll(txns);
-                walletDao.delete(wallet);
-            });
-
-            // 11. Delete user
-            userDao.deleteById(id);
-
+            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 0").executeUpdate();
+            
+            entityManager.createNativeQuery("DELETE FROM milestone_history WHERE milestone_id IN (SELECT id FROM milestones WHERE job_id IN (SELECT id FROM jobs WHERE influencer_id = " + id + "))").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM milestones WHERE job_id IN (SELECT id FROM jobs WHERE influencer_id = " + id + ")").executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM jobs WHERE influencer_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM applications WHERE user_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM campaign_applications WHERE receiver_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM campaign_receivers WHERE receiver_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM campaigns WHERE creator_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM verification_requests WHERE user_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM support_tickets WHERE user_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM notifications WHERE user_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM reviews WHERE creator_id = " + id + " OR receiver_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM wallets WHERE user_id = " + id).executeUpdate();
+            entityManager.createNativeQuery("DELETE FROM users WHERE id = " + id).executeUpdate();
+            
+            entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate();
+            
             return ResponseEntity.ok().build();
         } catch (Exception e) {
+            try { entityManager.createNativeQuery("SET FOREIGN_KEY_CHECKS = 1").executeUpdate(); } catch (Exception ex) {}
             e.printStackTrace();
             return ResponseEntity.badRequest().body("Delete failed: " + e.getMessage());
         }
