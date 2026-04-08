@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import { ChevronLeft, Upload, Calendar, Hash, Monitor, X, Image as ImageIcon, Video, Loader2, Layout, CheckCircle, Eye, Edit2 } from 'lucide-react';
 import { ClassicLayout, ShowcaseLayout, SocialLayout, MinimalLayout } from '../../components/layouts/CampaignLayouts';
@@ -7,12 +7,26 @@ import { useAuth } from '../../context/AuthContext';
 import SimpleMdeReact from 'react-simplemde-editor';
 import 'easymde/dist/easymde.min.css';
 
+interface FormDataType {
+  title: string;
+  description: string;
+  images: string[];
+  videos: string[];
+  deadline: string;
+  tags: string[];
+  platforms: string[];
+  layoutStyle: string;
+  status: string;
+  budget: number;
+  targetApplicants: number;
+}
+
 const CreateCampaign = () => {
  const { id } = useParams(); // Get campaign ID if in edit mode
  const navigate = useNavigate();
- const location = useLocation();
+  // const location = useLocation();
  const { user } = useAuth();
- const [formData, setFormData] = useState(() => {
+  const [formData, setFormData] = useState<FormDataType>(() => {
  if (!id) {
  const draft = sessionStorage.getItem('campaignDraft');
  if (draft) {

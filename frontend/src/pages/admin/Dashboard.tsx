@@ -1,6 +1,6 @@
-import { Users, ShoppingBag, DollarSign, Activity, ShieldCheck, Check, X, ExternalLink, Loader2, UserX, UserCheck, Edit2, Trash2, Plus, Wallet } from 'lucide-react';
+import { Users, ShoppingBag, DollarSign, ShieldCheck, Check, X, ExternalLink, Loader2, UserX, UserCheck, Edit2, Trash2, Plus, Wallet } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../../services/api';
 
 interface VerificationRequest {
@@ -17,27 +17,6 @@ interface VerificationRequest {
  createdAt: string;
 }
 
-const getVietQRBankName = (name: string): string => {
- if (!name) return "";
- const lower = name.toLowerCase();
- if (lower.includes("vietcom") || lower.includes("vcb")) return "VCB";
- if (lower.includes("techcom") || lower.includes("tcb")) return "TCB";
- if (lower.includes("mb") || lower.includes("quân đội")) return "MB";
- if (lower.includes("agri") || lower.includes("vba")) return "VBA";
- if (lower.includes("vietin") || lower.includes("ctg")) return "CTG";
- if (lower.includes("bidv")) return "BIDV";
- if (lower.includes("vp")) return "VPB";
- if (lower.includes("tp")) return "TPB";
- if (lower.includes("vib")) return "VIB";
- if (lower.includes("acb")) return "ACB";
- if (lower.includes("saco") || lower.includes("stb")) return "STB";
- if (lower.includes("shb")) return "SHB";
- if (lower.includes("ocean") || lower.includes("ocb")) return "OCB";
- if (lower.includes("sea") || lower.includes("ssb")) return "SeABank";
- if (lower.includes("hdb")) return "HDB";
- return name.replace(/\s+/g, '');
-};
-
 const AdminDashboard = () => {
  // Utility for Vietnamese accent removal in search
  const removeAccents = (str: string) => {
@@ -51,8 +30,7 @@ const AdminDashboard = () => {
 
  const [withdrawals, setWithdrawals] = useState<any[]>([]);
  const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
- const [supportTickets, setSupportTickets] = useState<any[]>([]);
- const [loadingSupport, setLoadingSupport] = useState(false);
+  const [supportTickets, setSupportTickets] = useState<any[]>([]);
  const [transferQRModalData, setTransferQRModalData] = useState<any | null>(null);
 
  const [stats, setStats] = useState<any>({ totalUsers: 0, activeCampaigns: 0, totalRevenue: 0, totalCommission: 0 });
@@ -145,31 +123,16 @@ const AdminDashboard = () => {
  }
  };
 
- const fetchSupportTickets = async () => {
- setLoadingSupport(true);
- try {
- const response = await api.get('/support-tickets');
- setSupportTickets(response.data.content || response.data);
- } catch (error) {
- console.error("Failed to fetch support tickets", error);
- } finally {
- setLoadingSupport(false);
- }
- };
+  const fetchSupportTickets = async () => {
+    try {
+      const response = await api.get('/support-tickets');
+      setSupportTickets(response.data.content || response.data);
+    } catch (error) {
+      console.error("Failed to fetch support tickets", error);
+    }
+  };
 
- const handleResolveTicket = async (id: number) => {
- setProcessingId(id);
- try {
- await api.put(`/support-tickets/${id}/resolve`);
- setSupportTickets(prev => prev.map(t => t.id === id ? { ...t, status: 'RESOLVED' } : t));
- } catch (error) {
- console.error("Failed to resolve ticket", error);
- } finally {
- setProcessingId(null);
- }
- };
-
- const fetchStats = async () => {
+  const fetchStats = async () => {
  try {
  const res = await api.get('/admin/statistics');
  setStats(res.data);
@@ -642,7 +605,7 @@ const AdminDashboard = () => {
  <CartesianGrid strokeDasharray="3 3" opacity={0.5} />
  <XAxis dataKey="date" tick={{ fontSize: 12 }} tickMargin={10} minTickGap={30} />
  <YAxis tickFormatter={(val) => val >= 1000000 ? `${(val / 1000000).toFixed(0)} Tr` : `${(val / 1000).toFixed(0)} N`} tick={{ fontSize: 12 }} width={55} />
- <Tooltip formatter={(value: number) => [`${value.toLocaleString()} ₫`, 'Doanh Thu']} labelStyle={{ color: 'black' }} />
+ <Tooltip formatter={(value) => [`${Number(value).toLocaleString()} ₫`, 'Doanh Thu']} labelStyle={{ color: 'black' }} />
  <Line type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
  </LineChart>
  </ResponsiveContainer>
@@ -656,7 +619,7 @@ const AdminDashboard = () => {
  <CartesianGrid strokeDasharray="3 3" opacity={0.5} />
  <XAxis dataKey="date" tick={{ fontSize: 12 }} tickMargin={10} minTickGap={30} />
  <YAxis tickFormatter={(val) => val >= 1000000 ? `${(val / 1000000).toFixed(0)} Tr` : `${(val / 1000).toFixed(0)} N`} tick={{ fontSize: 12 }} width={55} />
- <Tooltip formatter={(value: number) => [`${value.toLocaleString()} ₫`, 'Hoa Hồng']} cursor={{ fill: '#f3f4f6' }} />
+ <Tooltip formatter={(value) => [`${Number(value).toLocaleString()} ₫`, 'Hoa Hồng']} cursor={{ fill: '#f3f4f6' }} />
  <Bar dataKey="commission" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={50} />
  </BarChart>
  </ResponsiveContainer>
