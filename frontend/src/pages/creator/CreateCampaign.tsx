@@ -323,13 +323,13 @@ const CreateCampaign = () => {
  <p className="text-sm text-red-700 mb-4">
  Để đảm bảo môi trường an toàn và minh bạch, bạn cần phải xác minh danh tính tài khoản trước khi đăng tải chiến dịch thuê Influencer.
  </p>
- <button 
- type="button"
- onClick={() => navigate('/settings')}
- className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm transition-colors"
- >
- Đi đến Cài Đặt để Xác Minh
- </button>
+  <button 
+  type="button"
+  onClick={() => navigate('/verification')}
+  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm transition-colors"
+  >
+  Đi đến Trang Xác Minh
+  </button>
  </div>
  )}
 
