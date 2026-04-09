@@ -8,7 +8,6 @@ import org.springframework.cache.annotation.Cacheable;
 
 @Repository
 public interface UserDao extends JpaRepository<User, Long> {
-    @Cacheable("usersByEmail")
     User findByEmail(String email);
     boolean existsByEmail(String email);
     @Cacheable("usersByRole")

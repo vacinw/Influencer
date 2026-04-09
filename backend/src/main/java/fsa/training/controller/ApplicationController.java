@@ -58,9 +58,16 @@ public class ApplicationController {
     @PostMapping("/apply")
     public ResponseEntity<?> apply(@RequestBody Map<String, Object> payload) {
         User user = getCurrentUser();
-        // user role validation if needed (must be RECEIVER)
         if (user == null) {
             return ResponseEntity.status(401).body("Unauthorized");
+        }
+
+        if (user.getRole() == null || !"RECEIVER".equals(user.getRole().getName())) {
+            return ResponseEntity.status(403).body("Chỉ người nhận chiến dịch (RECEIVER) mới có thể ứng tuyển");
+        }
+
+        if (!Boolean.TRUE.equals(user.getVerified())) {
+            return ResponseEntity.status(403).body("Tài khoản của bạn chưa xác thực. Vui lòng xác thực trước khi ứng tuyển.");
         }
 
         try {

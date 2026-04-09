@@ -678,7 +678,6 @@ const AdminDashboard = () => {
   <thead className="bg-gray-50">
   <tr>
   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày</th>
-  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người Nhận</th>
   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chiến Dịch</th>
   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Loại</th>
   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Số Tiền</th>
@@ -690,15 +689,12 @@ const AdminDashboard = () => {
   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
   {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : '-'}
   </td>
-  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-  {item.user?.name || item.receiverName || '-'}
-  </td>
   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-  {item.campaign?.title || item.campaignTitle || '-'}
+  {item.campaignTitle || '-'}
   </td>
   <td className="px-6 py-4 whitespace-nowrap">
-  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.type === 'COMMISSION' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
-  {item.type === 'COMMISSION' ? 'Hoa hồng' : 'Khác'}
+  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.description?.startsWith('Commission from Job') ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
+  {item.description?.startsWith('Commission from Job') ? 'Hoa hồng' : 'Khác'}
   </span>
   </td>
   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
@@ -740,8 +736,8 @@ const AdminDashboard = () => {
  >
  <option value="ALL">Tất cả vai trò</option>
  <option value="ADMIN">Quản trị viên (ADMIN)</option>
- <option value="CREATOR">Thương hiệu (CREATOR)</option>
- <option value="RECEIVER">Người ảnh hưởng (RECEIVER)</option>
+  <option value="CREATOR">Nhãn hàng / Brand (CREATOR)</option>
+  <option value="RECEIVER">Người nhận chiến dịch (RECEIVER)</option>
  </select>
  </div>
 

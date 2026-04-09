@@ -137,9 +137,9 @@ const Register = () => {
  className="relative w-full pl-10 pr-10 py-3 text-left border border-gray-300 rounded-lg text-gray-900 bg-white focus:outline-none transition-all"
  >
  <span className={!formData.roleName ? 'text-gray-500' : ''}>
- {formData.roleName === 'CREATOR' ? 'Tôi muốn tìm Job (Nhà sáng tạo)' :
- formData.roleName === 'RECEIVER' ? 'Tôi muốn tìm Influencer (Nhãn hàng)' :
- 'Chọn vai trò của bạn'}
+  {formData.roleName === 'CREATOR' ? 'Tôi là nhãn hàng (CREATOR)' :
+  formData.roleName === 'RECEIVER' ? 'Tôi là người nhận chiến dịch (RECEIVER)' :
+  'Chọn vai trò của bạn'}
  </span>
  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
  <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -156,7 +156,7 @@ const Register = () => {
  }}
  className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors ${formData.roleName === 'CREATOR' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
  >
- Tôi muốn tìm Job (Nhà sáng tạo)
+  Tôi là nhãn hàng (CREATOR)
  </button>
  <button
  type="button"
@@ -166,7 +166,7 @@ const Register = () => {
  }}
  className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors ${formData.roleName === 'RECEIVER' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
  >
- Tôi muốn tìm Influencer (Nhãn hàng)
+  Tôi là người nhận chiến dịch (RECEIVER)
  </button>
  </div>
  )}

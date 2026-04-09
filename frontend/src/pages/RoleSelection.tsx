@@ -42,7 +42,10 @@ const RoleSelection = () => {
     } catch (error: any) {
       console.error('Error:', error);
       console.error('Error response:', error.response?.data);
-      alert('Có lỗi xảy ra: ' + (error.response?.data || error.message));
+      const backendMessage = typeof error.response?.data === 'string'
+        ? error.response.data
+        : (error.response?.data?.message || JSON.stringify(error.response?.data));
+      alert('Có lỗi xảy ra: ' + (backendMessage || error.message));
     } finally {
       setLoading(false);
       setSelectedRole(null);
@@ -65,7 +68,7 @@ const RoleSelection = () => {
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-3xl">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 px-4">
-          {/* Creator Card - Nhà sáng tạo = CREATOR */}
+          {/* Creator Card - Nhãn hàng/Brand = CREATOR */}
           <button
             onClick={() => handleRoleSelect('CREATOR')}
             disabled={loading}
@@ -81,16 +84,16 @@ const RoleSelection = () => {
               )}
               <div className="ml-4">
                 <h3 className="text-lg font-bold text-gray-900">
-                  Tôi muốn tìm Job (Nhà sáng tạo)
+                  Tôi là nhãn hàng (Brand)
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Nhận job review, quản lý chiến dịch và phát triển thương hiệu cá nhân.
+                  Tạo chiến dịch, tuyển người nhận và quản lý tiến độ công việc.
                 </p>
               </div>
             </div>
           </button>
 
-          {/* Receiver Card - Nhãn hàng = RECEIVER */}
+          {/* Receiver Card - Người nhận chiến dịch = RECEIVER */}
           <button
             onClick={() => handleRoleSelect('RECEIVER')}
             disabled={loading}
@@ -106,10 +109,10 @@ const RoleSelection = () => {
               )}
               <div className="ml-4">
                 <h3 className="text-lg font-bold text-gray-900">
-                  Tôi muốn thuê Influencer (Nhãn hàng)
+                  Tôi là người nhận chiến dịch
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Đăng chiến dịch, tìm kiếm và kết nối với các KOL/Influencer hàng đầu.
+                  Nhận các chiến dịch và theo dõi tiến độ công việc.
                 </p>
               </div>
             </div>

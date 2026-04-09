@@ -393,6 +393,42 @@ public class AdminController {
                 .filter(tx -> tx.getDescription() != null && tx.getDescription().startsWith("Commission from Job"))
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(commissionTransactions);
+
+        List<Map<String, Object>> response = commissionTransactions.stream().map(tx -> {
+            Map<String, Object> row = new HashMap<>();
+            row.put("id", tx.getId());
+            row.put("amount", tx.getAmount());
+            row.put("type", tx.getType());
+            row.put("status", tx.getStatus());
+            row.put("description", tx.getDescription());
+            row.put("createdAt", tx.getCreatedAt());
+
+            String campaignTitle = "-";
+            Long jobId = extractJobIdFromDescription(tx.getDescription());
+            if (jobId != null) {
+                Job job = jobDao.findById(jobId).orElse(null);
+                if (job != null && job.getCampaign() != null && job.getCampaign().getTitle() != null) {
+                    campaignTitle = job.getCampaign().getTitle();
+                } else {
+                    campaignTitle = "Job #" + jobId;
+                }
+            }
+
+            row.put("campaignTitle", campaignTitle);
+            return row;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(response);
+    }
+
+    private Long extractJobIdFromDescription(String description) {
+        if (description == null) return null;
+        String prefix = "Commission from Job #";
+        if (!description.startsWith(prefix)) return null;
+        try {
+            return Long.parseLong(description.substring(prefix.length()).trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

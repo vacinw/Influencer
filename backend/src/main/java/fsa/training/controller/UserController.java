@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -46,15 +47,22 @@ public class UserController {
         }
 
         User user = userDao.findByEmail(email);
-        if (user == null) {
-            return ResponseEntity.badRequest().body("User not found");
-        }
 
         String roleName = payload.get("role");
         System.out.println("=== ROLE UPDATE DEBUG ===");
         System.out.println("Email from auth: " + email);
         System.out.println("Role from payload: " + roleName);
-        System.out.println("Current user in DB before update: " + (user.getRole() != null ? user.getRole().getName() : "NULL"));
+        System.out.println("Current user in DB before update: " + (user != null && user.getRole() != null ? user.getRole().getName() : "NULL"));
+        // If user not exist, auto-create for enabling role assignment during Google login flow
+        if (user == null) {
+            user = new User();
+            user.setEmail(email);
+            String uname = (email != null && email.contains("@")) ? email.substring(0, email.indexOf("@")) : email;
+            user.setName(uname != null ? uname : "GoogleUser");
+            user.setPassword(UUID.randomUUID().toString());
+            userDao.save(user);
+            System.out.println("ROLE UPDATE: Auto-created user for email " + email);
+        }
         
         if (roleName == null || (!roleName.equals("CREATOR") && !roleName.equals("RECEIVER"))) {
             return ResponseEntity.badRequest().body("Invalid role. Must be CREATOR or RECEIVER");
@@ -71,13 +79,20 @@ public class UserController {
         }
 
         user.setRole(role);
-        userDao.save(user);
-        
-        // Fetch fresh user to return
-        user = userDao.findByEmail(email);
-        System.out.println("User role after update: " + (user.getRole() != null ? user.getRole().getName() : "null"));
+        user = userDao.save(user);
+        System.out.println("ROLE UPDATE: user role after update: " + (user.getRole() != null ? user.getRole().getName() : "null"));
 
-        return ResponseEntity.ok(user);
+        Map<String, Object> roleMap = new java.util.HashMap<>();
+        roleMap.put("id", user.getRole() != null ? user.getRole().getId() : null);
+        roleMap.put("name", user.getRole() != null ? user.getRole().getName() : null);
+
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("id", user.getId());
+        response.put("email", user.getEmail());
+        response.put("name", user.getName());
+        response.put("role", roleMap);
+
+        return ResponseEntity.ok(response);
     }
 
     private User getCurrentUser() {

@@ -12,8 +12,7 @@ const ApplicantsList = () => {
  const [applicants, setApplicants] = useState<any[]>([]);
  const [loading, setLoading] = useState(true);
  const [campaignTitle, setCampaignTitle] = useState('');
- const [campaignStatus, setCampaignStatus] = useState('');
- const [selectedApplicant, setSelectedApplicant] = useState<any>(null);
+  const [campaignStatus, setCampaignStatus] = useState('');
  const [reviewModal, setReviewModal] = useState<{ isOpen: boolean, receiverId: number | null }>({ isOpen: false, receiverId: null });
  const [reviewFormData, setReviewFormData] = useState({ rating: 0, content: '' });
  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -62,7 +61,7 @@ const ApplicantsList = () => {
  setReviewFormData(prev => ({ ...prev, rating: rate }));
  };
 
- const submitReview = async () => {
+  const submitReview = async () => {
  if (reviewFormData.rating === 0) {
  showToast("Vui lòng chọn số sao đánh giá", "error");
  return;
@@ -87,7 +86,7 @@ const ApplicantsList = () => {
  isProcessingRef.current = false;
  setIsSubmittingReview(false);
  }
- };
+  };
 
  if (loading) {
  return (
@@ -177,12 +176,12 @@ const ApplicantsList = () => {
  </div>
 
  <div className="flex items-center gap-3 mt-4">
- <button
- onClick={() => setSelectedApplicant(app)}
- className="text-sm text-indigo-600 font-medium hover:underline"
- >
- Xem Hồ Sơ
- </button>
+  <button
+  onClick={() => navigate(`/profile/${app.receiver?.id}`)}
+  className="text-sm text-indigo-600 font-medium hover:underline"
+  >
+  Xem Hồ Sơ
+  </button>
 
  <div className="flex-1"></div>
 
@@ -220,74 +219,6 @@ const ApplicantsList = () => {
  </div>
  </div>
 
- {/* Profile Modal */}
- {selectedApplicant && (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedApplicant(null)}>
- <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-0 overflow-hidden animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
- <div className="h-24 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
- <div className="px-6 pb-6">
- <div className="relative flex justify-between items-end -mt-12 mb-4">
- <div className="p-1.5 bg-white rounded-full">
- {selectedApplicant.receiver?.avatarUrl ? (
- <img src={selectedApplicant.receiver.avatarUrl} alt="" className="w-24 h-24 rounded-full object-cover border border-gray-100" />
- ) : (
- <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-4xl font-bold text-gray-500">
- {selectedApplicant.receiver?.name?.charAt(0) || 'U'}
- </div>
- )}
- </div>
- <div className="flex gap-2 mb-1">
- <button onClick={() => setSelectedApplicant(null)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
- <XCircle size={24} />
- </button>
- </div>
- </div>
-
- <h2 className="text-2xl font-bold text-gray-900">{selectedApplicant.receiver?.name}</h2>
- <p className="text-gray-500 mb-4">{selectedApplicant.receiver?.email}</p>
-
- <div className="space-y-4">
- <div>
- <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-1">Tiểu Sử</h4>
- <p className="text-gray-600 text-sm leading-relaxed">
- {selectedApplicant.receiver?.bio || "Chưa có tiểu sử."}
- </p>
- </div>
-
- {selectedApplicant.receiver?.phone && (
- <div className="flex items-center gap-2 text-sm text-gray-700">
- <span className="font-semibold">SĐT:</span> {selectedApplicant.receiver.phone}
- </div>
- )}
-
- <div>
- <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">Liên Kết Mạng Xã Hội</h4>
- <div className="flex flex-wrap gap-2">
- {selectedApplicant.receiver?.socialLinks?.length > 0 ? (
- selectedApplicant.receiver.socialLinks.map((link: string, idx: number) => (
- <a key={idx} href={link} target="_blank" rel="noopener noreferrer" className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-full text-xs text-indigo-600 font-medium truncate max-w-[200px]">
- {link}
- </a>
- ))
- ) : (
- <span className="text-sm text-gray-400 italic">Chưa cung cấp đường liên kết</span>
- )}
- </div>
- </div>
- </div>
-
- <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
- <button
- onClick={() => setSelectedApplicant(null)}
- className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors"
- >
- Đóng
- </button>
- </div>
- </div>
- </div>
- </div>
- )}
  {/* Review Modal */}
  {reviewModal.isOpen && (
  <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">

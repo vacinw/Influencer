@@ -65,7 +65,7 @@ const Header = () => {
  user.role.name === 'RECEIVER' ? 'bg-emerald-50 text-emerald-700' :
  'bg-purple-50 text-purple-700'
  }`}>
- {user.role.name === 'CREATOR' ? 'Brand' : user.role.name === 'RECEIVER' ? 'Influencer' : 'Admin'}
+  {user.role.name === 'CREATOR' ? 'Brand' : user.role.name === 'RECEIVER' ? 'Receiver' : 'Admin'}
  </span>
  )}
  </Link>

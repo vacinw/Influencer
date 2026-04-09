@@ -59,9 +59,18 @@ const CampaignDetail = () => {
  }
  }, [user, isAuthenticated, campaign]);
 
- const handleApply = async (e: React.FormEvent) => {
- e.preventDefault();
- if (isSubmittingRef.current) return;
+  const handleApply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (user?.role?.name !== 'RECEIVER') {
+      showToast('Chỉ người nhận chiến dịch (RECEIVER) mới có thể ứng tuyển.', 'error');
+      return;
+    }
+    if (!user?.isVerified) {
+      showToast('Bạn cần xác thực tài khoản trước khi ứng tuyển.', 'error');
+      navigate('/verification');
+      return;
+    }
+    if (isSubmittingRef.current) return;
  isSubmittingRef.current = true;
  setIsSubmitting(true);
  try {
@@ -73,10 +82,12 @@ const CampaignDetail = () => {
  showToast('Ứng tuyển thành công!', 'success');
  setIsApplyModalOpen(false);
  setHasApplied(true);
- } catch (error: any) {
- console.error("Application failed", error);
- const errorMsg = error.response?.data ? JSON.stringify(error.response.data) : 'Ứng tuyển thất bại.';
- showToast(errorMsg, 'error');
+    } catch (error: any) {
+      console.error("Application failed", error);
+      const errorMsg = typeof error.response?.data === 'string'
+        ? error.response.data
+        : (error.response?.data?.message || 'Ứng tuyển thất bại.');
+      showToast(errorMsg, 'error');
  } finally {
  isSubmittingRef.current = false;
  setIsSubmitting(false);
@@ -102,13 +113,31 @@ const CampaignDetail = () => {
 
  const isOwner = user?.id === campaign.creator?.id;
 
- const renderLayout = () => {
- const data = {
- ...campaign,
- tags: Array.isArray(campaign.tags) ? campaign.tags : (campaign.tags || '').split(','),
- onApply: () => setIsApplyModalOpen(true),
- hasApplied: hasApplied
- };
+  const renderLayout = () => {
+  const canOpenApplyModal = !(user?.role?.name === 'RECEIVER' && !user?.isVerified);
+
+  const data = {
+  ...campaign,
+  tags: Array.isArray(campaign.tags) ? campaign.tags : (campaign.tags || '').split(','),
+  onApply: () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    if (user?.role?.name !== 'RECEIVER') {
+      showToast('Chỉ người nhận chiến dịch (RECEIVER) mới có thể ứng tuyển.', 'error');
+      return;
+    }
+    if (!user?.isVerified) {
+      showToast('Bạn cần xác thực tài khoản trước khi ứng tuyển.', 'error');
+      navigate('/verification');
+      return;
+    }
+    setIsApplyModalOpen(true);
+  },
+  canApply: canOpenApplyModal,
+  hasApplied: hasApplied
+  };
 
  switch (campaign.layoutStyle) {
  case 'SHOWCASE': return <ShowcaseLayout data={data} />;
